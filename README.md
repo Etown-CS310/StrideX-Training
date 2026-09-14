@@ -1,32 +1,30 @@
-# React + TypeScript + Vite
+# StrideX Training
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A training calendar that allows users to organize activities and coaches to view and analyze activities and data
 
-Currently, two official plugins are available:
+## 🛠️ Installation
+1. Install <a href="https://nodejs.org/en/download">Node.js</a>
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+2. Clone the repository into desired folder:
+```bash
+git clone https://github.com/Etown-CS310/StrideX-Training.git
+cd StrideX-Training
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+3. Install dependencies
+```bash
+npm install
+```
+
+## 🚀 Quick Start
+1. Start the development server:
+```bash
+npm run dev
+```
+
+2. Open your browser and navigate to `http://localhost:5173/` to access the landing page
+
+## 👤 Contributors
+- Kaiden Miller - [@kaidenmiller06](https://github.com/kaidenmiller06)
+- Brian Duva - [@bjduva456](https://github.com/bjduva456)
+- Andrew Arvey - [@LittleDragon78](https://github.com/LittleDragon78)
