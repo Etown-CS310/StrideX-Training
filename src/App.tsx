@@ -1,7 +1,5 @@
 import { parseFitFile } from './scripts/fitParser';
 
-import './App.css'
-
 function App() {
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
