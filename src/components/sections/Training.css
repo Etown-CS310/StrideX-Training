@@ -1,4 +1,110 @@
 .training {
   display: grid;
   grid-template-columns: 1fr 400px;
+  background-color: #2d2d2d;
+  color: #969696;
+
+  
+}
+
+#sideBar {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding-right: 10px;
+}
+
+#activity_title {
+  background-color: #2d2d2d;
+  color: #969696;
+  border-radius: 10px;
+  border-color: #969696;
+  width: 150px;
+}
+
+#activity_select {
+  background-color: #2d2d2d;
+  color: #969696;
+  border-radius: 10px;
+  border-color: #969696;
+  width: 150px;
+}
+
+#distance {
+  background-color: #2d2d2d;
+  color: #969696;
+  border-radius: 10px;
+  border-color: #969696;
+  width: 100px;
+}
+#distanceDrop {
+  background-color: #2d2d2d;
+  color: #969696;
+  border-radius: 10px;
+  border-color: #969696;
+  width: 50px;
+}
+
+#duration {
+  background-color: #2d2d2d;
+  color: #969696;
+  border-radius: 10px;
+  border-color: #969696;
+  width: 50px;
+}
+
+#avg_hr {  background-color: #2d2d2d;
+  color: #969696;
+  border-radius: 10px;
+  border-color: #969696;
+  width: 150px;
+}
+
+#max_hr {
+  background-color: #2d2d2d;
+  color: #969696;
+  border-radius: 10px;
+  border-color: #969696;
+  width: 150px;
+}
+
+#notes {
+  background-color: #2d2d2d;
+  color: #969696;
+  border-radius: 10px;
+  border-color: #969696;
+  width: 300px;
+  height: 50px;
+}
+
+#elevation {
+  background-color: #2d2d2d;
+  color: #969696;
+  border-radius: 10px;
+  border-color: #969696;
+  width: 150px;
+}
+
+#calories {
+  background-color: #2d2d2d;
+  color: #969696;
+  border-radius: 10px;
+  border-color: #969696;
+  width: 150px;
+}
+
+#cadence {
+  background-color: #2d2d2d;
+  color: #969696;
+  border-radius: 10px;
+  border-color: #969696;
+  width: 150px;
+}
+
+#power {
+  background-color: #2d2d2d;
+  color: #969696;
+  border-radius: 10px;
+  border-color: #969696;
+  width: 150px;
 }
