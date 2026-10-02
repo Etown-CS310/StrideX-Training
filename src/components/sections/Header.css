@@ -1,0 +1,15 @@
+.header-logo {
+  height: 50px;
+  width: auto;
+}
+
+.nav {
+  --bs-nav-link-color: #fff;
+  --bs-nav-link-hover-color: var(--bs-stridex-darkgreen);
+  font-family: var(--stridex-font-heading);
+  font-weight: 700;
+}
+
+.nav .nav-link.active {
+  color: var(--bs-stridex-green);
+}
