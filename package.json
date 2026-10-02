@@ -7,11 +7,13 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed": "node src/scripts/seedData.ts"
   },
   "dependencies": {
     "@garmin/fitsdk": "^21.214.0",
     "bootstrap": "^5.3.8",
+    "firebase-admin": "^14.5.0",
     "react": "^19.2.8",
     "react-bootstrap-icons": "^1.11.6",
     "react-calendar": "^6.0.1",
