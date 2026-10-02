@@ -1,0 +1,24 @@
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+
+// Merge StrideX branding colors into bootstraps theme colors 
+$custom-colors: (
+  "stridex-green": #32cd32,
+  "stridex-darkgreen": #1F8F1F,
+  "stridex-black": #18181B,
+  "stridex-grey": #2D2D2D,
+  "stridex-lightgrey": #969696,
+);
+$theme-colors: map-merge($theme-colors, $custom-colors);
+
+// Use sans-serif as the default font family and Orbitron for headings
+$font-family-sans-serif: sans-serif;
+$headings-font-family: "Orbitron", sans-serif;
+
+@import "bootstrap/scss/bootstrap";
+
+// Orbitron font family variable to be used in custom components
+:root {
+  --stridex-font-heading: "Orbitron", sans-serif;
+}

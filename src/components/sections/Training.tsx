@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Calendar from 'react-calendar';
+import { ChevronLeft, ChevronRight } from 'react-bootstrap-icons'
 import type { Value } from 'react-calendar/dist/shared/types.js';
 
 import { parseFitFile } from '../../scripts/fitParser';
@@ -64,14 +65,18 @@ function Training() {
   const rowCount = getWeekRowCount(activeStartDate ?? new Date());
 
   return (
-    <div className="training">
-      <main className="mb-3">
+    <div className="training p-3">
+      <main>
         {/* Calendar */}
         <div className="calendar-header">
           <div className="header-controls">
-            <button className="prev-month" onClick={goToPrevMonth}>&lt;</button>
+            <button className="prev-month" onClick={goToPrevMonth}>
+              <ChevronLeft size={20} />
+            </button>
             <button className="cur-month" onClick={goToCurMonth}>Today</button>
-            <button className="next-month" onClick={goToNextMonth}>&gt;</button>
+            <button className="next-month" onClick={goToNextMonth}>
+              <ChevronRight size={20} />
+            </button>
             <h1 className="month-year">
               {(activeStartDate ?? new Date()).toLocaleString('default', { month: 'long', year: 'numeric' })}
             </h1>
@@ -109,7 +114,7 @@ function Training() {
         </div>
       </main>
 
-      <aside id="sideBar">
+      <aside id="sideBar" className="ps-5">
         <div className="side" id="firstrow">
         <label>Activity Title 
           <br></br>
