@@ -1,0 +1,12 @@
+.home {
+  background-image:
+    linear-gradient(to right, #1f8f1f25 1px, transparent 1px),
+    linear-gradient(to bottom, #1F8F1F25 1px, transparent 1px);
+  background-size: 120px 120px;
+  background-position: center;
+}
+
+.home-logo {
+  height: 10rem;
+  width: auto;
+}
