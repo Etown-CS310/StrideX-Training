@@ -12,6 +12,23 @@ $custom-colors: (
 );
 $theme-colors: map-merge($theme-colors, $custom-colors);
 
+// Custom hover and transition utilities for StrideX branding colors
+$utilities: (
+  "hover-bg": (
+    property: background-color,
+    class: hover-bg,
+    state: hover,
+    values: $custom-colors
+  ),
+  "transition": (
+    property: transition,
+    class: transition,
+    values: (
+      "bg": background-color 0.3s ease
+    )
+  )
+);
+
 // Use sans-serif as the default font family and Orbitron for headings
 $font-family-sans-serif: sans-serif;
 $headings-font-family: "Orbitron", sans-serif;

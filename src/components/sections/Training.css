@@ -1,123 +1,26 @@
-.training {
-  display: grid;
-  grid-template-columns: 1fr 400px;
-  background-color: #2D2D2D;
-  color: #969696;
-}
-
-/* Header styling */
-.calendar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-  color: #ffffff;
-}
-
-.header-controls {
-  display: flex;
-  align-items: center;
-}
-
-.month-year {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin: 0;
-  padding-left: 1rem;
-  display: flex;
-  align-items: center;
-}
-
-.prev-month, .cur-month, .next-month {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-
-  width: 40px;
-  height: 40px;
-  border-radius: 25px;
-
-  background: none;
-  border: none;
-  color: #ffffff;
-  font-size: 1rem;
-  font-family: inherit;
-  transition: background-color 0.3s ease;
-}
-
-.cur-month {
-  border: 1px solid #969696;
-  width: auto;
-  padding: 0 1rem;
-}
-
-.prev-month:hover, .cur-month:hover, .next-month:hover {
-  background-color: #969696;
-}
-
-.upload-circle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid #969696;
-  color: #fff;
-  cursor: pointer;
-  font-size: 1.25rem;
-}
-
-.upload-circle:hover {
-  background: #969696;
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
 /* Calendar styling */
 .calendar-with-totals {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  background-color: #18181B;
-  border: 1px solid #969696;
-  border-radius: 25px;
-  width: 100%;
   font-family: inherit;
 }
 
 .react-calendar {
   grid-column: 1 / 8;
-  width: auto;
-}
-
-/* Custom naviagation */
-.react-calendar__navigation {
-  display: none;
 }
 
 .react-calendar__month-view__weekdays {
   text-align: center;
   text-transform: uppercase;
   font: inherit;
-  font-size: 0.75em;
+  /* font-size: 0.75em; */
   font-weight: bold;
 }
 
 .react-calendar__month-view__weekdays__weekday {
   display: flex;
   justify-content: center;
-  padding: 0.5rem 0;
+  /* padding: 0.5rem 0; */
 }
 
 .react-calendar__month-view__weekdays__weekday abbr {
@@ -125,7 +28,7 @@
   text-decoration: none;
   font-weight: 400;
   text-transform: uppercase;
-  font-size: 0.75rem;
+  /* font-size: 0.75rem; */
   cursor: default;
 }
 
@@ -137,22 +40,12 @@
 }
 
 .react-calendar__tile {
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: 0.5rem;
-
-  background: none;
-
   border-right: 1px solid #969696;
   border-bottom: 1px solid #969696;
   border-top: none;
   border-left: none;
 
-  border-radius: 0;
   aspect-ratio: 1 / 1;
-  color: #e5e5e5;
-  padding: 0.5rem;
 }
 
 .react-calendar__tile:nth-last-child(-n+7) {
@@ -172,16 +65,14 @@
 /* Totals column styling */
 .totals-column {
   grid-column: 8;
-  display: flex;
-  flex-direction: column;
 }
 
 .totals-label {
   text-align: center;
   text-transform: uppercase;
   font: inherit;
-  font-size: 0.75em;
-  padding: 0.5rem 0;
+  /* font-size: 0.75em;
+  padding: 0.5rem 0; */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -194,17 +85,10 @@
 }
 
 .week-total-cell {
-  box-sizing: border-box;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: 0.5rem;
-  background: none;
-  border-top: 1px solid #969696;
-  border-radius: 0;
   aspect-ratio: 1 / 1;
-  color: #e5e5e5;  
 }
+
+/* Sidebar styling */
 
 #sideBar {
   display: flex;
