@@ -6,7 +6,6 @@ import Training from './components/sections/Training';
 import Groups from './components/sections/Groups';
 
 function App() {
-
   return (
     <BrowserRouter>
       <Header />
@@ -19,4 +18,4 @@ function App() {
   );
 }
 
-export default App
+export default App;
