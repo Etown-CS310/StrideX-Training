@@ -115,14 +115,14 @@ function Training() {
       </main>
 
       <aside id="sideBar" className="ps-5">
-        <div className="side" id="firstrow">
+        <div className="w-100 p-3" id="firstrow">
         <label>Activity Title 
           <br></br>
           <input id="activity_title" type="text"></input>
         </label>
         </div>
 
-        <div className="side" id="firstrow">
+        <div className="w-100 p-3" id="firstrow">
         <label>Activity Type 
           <br></br>
           <select id="activity_select" defaultValue="0">
@@ -131,7 +131,7 @@ function Training() {
         </label>
         </div>
 
-        <div className="side" id="secondrow">
+        <div className="w-100 p-3" id="secondrow">
         <label>Distance 
           <br></br>
           <input id="distance" type="number"></input>
@@ -143,8 +143,8 @@ function Training() {
         </label>
         </div>
 
-        <div className="side" id="secondrow">
-        <label>Duration
+        <div className="w-100 p-3" id="secondrow">
+        <label className="duration">Duration
           <br></br>
           <input id="duration" type="number"></input>
           <input id="duration" type="number"></input>
@@ -153,7 +153,7 @@ function Training() {
         </label>
         </div>
 
-        <div className="side" id="thirdrow">
+        <div className="w-100 p-3" id="thirdrow">
         <label>Avg HR
           <br></br>
           <input id="avg_hr" type="number"></input>
@@ -161,7 +161,7 @@ function Training() {
         </label>
         </div>
 
-        <div className="side" id="thirdrow">
+        <div className="w-100 p-3" id="thirdrow">
         <label>Max HR
           <br></br>
           <input id="max_hr" type="number"></input>
@@ -176,14 +176,14 @@ function Training() {
           </label>
         </div> */}
 
-        <div>
+        <div className="w-100 p-3">
           <label>Notes
             <br></br>
             <input id="notes" type="text"></input>
           </label>
         </div>
         
-        <div>
+        <div className="w-100 p-3">
           <label>Elevation
             <br></br>
             <input id="elevation" type="number"></input>
@@ -191,7 +191,7 @@ function Training() {
           </label>
         </div>
 
-        <div>
+        <div className="w-100 p-3">
           <label>Calories
             <br></br>
             <input id="calories" type="number"></input>
@@ -199,7 +199,7 @@ function Training() {
           </label>
         </div>
 
-        <div>
+        <div className="w-100 p-3">
           <label>Cadence
             <br></br>
             <input id="cadence" type="number"></input>
@@ -207,7 +207,7 @@ function Training() {
           </label>
         </div>
 
-        <div>
+        <div className="w-100 p-3">
           <label>Power
             <br></br>
             <input id="power" type="number"></input>
