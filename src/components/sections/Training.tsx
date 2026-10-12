@@ -154,67 +154,123 @@ function Training() {
           <aside id="sideBar" className="col-12 col-lg-4 col-xl-3">
             
             <div className="row">
-              <div className="p-3 col-6" id="firstrow">
-              <label className="w-100">Activity Title 
-                <br></br>
-                <input id="activity_title" type="text"></input>
-              </label>
+              <div className="p-3 col-6">
+              <label>Activity Title</label>
+              <div>
+                <input 
+                  id="activity_title" 
+                  type="text" 
+                  className="w-100 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                ></input>
+              </div>
               </div>
 
-              <div className="p-3 col-6" id="firstrow">
-              <label className="w-100">Activity Type 
-                <br></br>
-                <select id="activity_select" defaultValue="0">
-                  <option value="0"> -- Base Activity --</option>
+              <div className="p-3 col-6">
+              <label>Activity Type</label>
+                <div className="w-100 input-group">
+                <select 
+                  id="activity_select" 
+                  defaultValue="0" 
+                  className="w-100 bg-transparent rounded-pill py-2 px-3 text-stridex-lightgrey border border-1 border-stridex-lightgrey 1h-base align-middle"
+                > 
+                {/* Figure out why activity type height doesn't match activity title without changing text size */}
+                  <option value="0">-- Base Activity --</option>
                 </select>
-              </label>
+                </div>
               </div>
             </div>
 
             <div className="row">
-              <div className="p-3 col-6" id="secondrow">
-              <label>Distance 
-                <br></br>
-                <div className="distance">
-                <input id="distance" type="number"></input>
-                <select id="distanceDrop" defaultValue="0">
+
+              <div className="p-3 col-6">
+              <label>Distance</label>
+                <div className="distance input-group">
+                <input 
+                  id="distance" 
+                  type="number" 
+                  className="w-50 rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                ></input>
+                <select 
+                  id="distanceDrop" 
+                  defaultValue="0" 
+                  className="w-50 rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                >
                   <option value="0">mi</option>
                   <option value="1">km</option>
                 </select>
                 </div>
-                {/* Need some way to track total miles/kilometers already traveled */}
-              </label>
+              
               </div>
+              {/* Need some way to track total miles/kilometers already traveled */}
 
-              <div className="p-3 col-6" id="secondrow">
-              <label className="duration w-100">Duration
-                <br></br>
-                <div id="duration">
-                <input type="number"></input>
-                <input type="number"></input>
-                <input type="number"></input>
+              {/* <div className="p-3 col-6">
+              <label>Max HR</label>
+              <div className="w-100 input-group mb-3">
+                <input
+                  id="max_hr" 
+                  type="number" 
+                  className="w-75 form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                ></input>
+                <label 
+                  id="max_hr_stay" 
+                  className="w-25 input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                >bpm</label>
+              </div>
+              </div> */}
+
+              <div className="p-3 col-6">
+              <label>Duration</label>
+                <div id="duration" className="w-100 input-group">
+                  <input 
+                    type="number" 
+                    className="w-100 form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                  ></input>
+                  <input 
+                    type="number" 
+                    className="w-100 form-control bg-transparent p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                  ></input>
+                  <input 
+                    type="number" 
+                    className="w-100 form-control rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                  ></input>
                 </div>
                 {/* Need some way to track total time (System.currentTimeMillis()???) */}
-              </label>
+              
               </div>
             </div>
 
             <div className="row">
-              <div className="p-3 col-6" id="thirdrow">
-              <label className="w-100">Avg HR
-                <br></br>
-                <input id="avg_hr" type="number"></input>
-                {/* Need some way to add bpm */}
-              </label>
+
+              <div className="p-3 col-6">
+              <label>Avg HR</label>
+              <div className="w-100 input-group mb-3">
+                <input 
+                  id="avg_hr" 
+                  type="number" 
+                  className="w-75 form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                ></input>
+                <label 
+                  id="avg_hr_stay" 
+                  className="w-25 input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                >bpm</label>
+              </div>
               </div>
 
-              <div className="p-3 col-6" id="thirdrow">
-              <label className="w-100">Max HR
-                <br></br>
-                <input id="max_hr" type="number"></input>
-                {/* Need some way to add bpm */}
-              </label>
+              <div className="p-3 col-6">
+              <label>Max HR</label>
+              <div className="w-100 input-group mb-3">
+                <input
+                  id="max_hr" 
+                  type="number" 
+                  className="w-75 form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                ></input>
+                <label 
+                  id="max_hr_stay" 
+                  className="w-25 input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                >bpm</label>
               </div>
+              </div>
+
             </div>
 
             {/* <div className="side">
@@ -225,47 +281,82 @@ function Training() {
             </div> */}
 
             <div className="row">
+              
               <div className="p-3 col-12">
                 <label className="w-100">Notes
-                  <br></br>
-                  <input id="notes" type="text"></input>
+                  <input 
+                    id="notes" 
+                    type="text" 
+                    className="w-100 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                  ></input>
                 </label>
               </div>
+
             </div>
             
             <div className="row">
+
               <div className="p-3 col-6">
-                <label className="w-100">Elevation
-                  <br></br>
-                  <input id="elevation" type="number"></input>
-                  {/* Some way to add feet */}
-                </label>
+                <label>Elevation</label>
+                <div className="w-100 input-group mb-3">
+                  <input 
+                    id="elevation" 
+                    type="number" 
+                    className="w-75 form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                  ></input>
+                  <label 
+                    id="elevation_stay" 
+                    className="w-25 input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                  >ft</label>
+                </div>
               </div>
 
               <div className="p-3 col-6">
-                <label className="w-100">Calories
-                  <br></br>
-                  <input id="calories" type="number"></input>
-                  {/* Some way to add Cal */}
-                </label>
+                <label>Calories</label>
+                <div className="w-100 input-group mb-3">
+                  <input 
+                    id="calories" 
+                    type="number" 
+                    className="w-75 form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                  ></input>
+                  <label 
+                    id="calories_stay" 
+                    className="w-25 input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                  >Cal</label>
+                </div>
               </div>
             </div>
 
             <div className="row">
+
               <div className="p-3 col-6">
-                <label className="w-100">Cadence
-                  <br></br>
-                  <input id="cadence" type="number"></input>
-                  {/* Some way to add feet */}
-                </label>
+                <label>Cadence</label>
+                <div className="w-100 input-group mb-3">
+                  <input 
+                    id="cadence" 
+                    type="number" 
+                    className="w-75 form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                  ></input>
+                  <label 
+                    id="cadence_stay" 
+                    className="w-25 input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                  >ft</label>
+                </div>
               </div>
 
               <div className="p-3 col-6">
-                <label className="w-100">Power
-                  <br></br>
-                  <input id="power" type="number"></input>
-                  {/* Some way to add Cal */}
-                </label>
+                <label>Power</label>
+                <div className="w-100 input-group mb-3">
+                  <input 
+                    id="power" 
+                    type="number" 
+                    className="w-75 form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                  ></input>
+                  <label 
+                    id="power_stay" 
+                    className="w-25 input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                  >Cal</label>
+                </div>
               </div>
             </div>
 
