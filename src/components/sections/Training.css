@@ -92,15 +92,15 @@
 
 #sideBar {
   padding-right: 10px;
+  color: #969696;
 }
 
 #activity_title {
   background-color: #2d2d2d;
   color: #969696;
   border-radius: 25px;
-  border-color: #969696;
-  
   border: 1px solid #969696;
+  padding: 0 10px;
 }
 
 #activity_select {
@@ -108,121 +108,118 @@
   color: #969696;
   border-radius: 25px;
   border-color: #969696;
-  width: 150px;
 }
 
 #distance {
   background-color: #2d2d2d;
   color: #969696;
   border-radius: 25px;
-  border-color: #969696;
-  width: 100px;
+  width: 50%;
+  border: 1px solid #969696;
+
+  border-radius: 25px 0 0 25px;
+  padding: 0 10px;
 }
 #distanceDrop {
   background-color: #2d2d2d;
   color: #969696;
   border-radius: 25px;
-  border-color: #969696;
-  width: 50px;
+  width: 50%;
+  border: 1px solid #969696;
+
+  border-radius: 0 25px 25px 0;
+  margin-left: -1px;
+  padding: 0 5px;
+}
+#distance, #distanceDrop {
+  height: 27.6px;
+  box-sizing: border-box;
+  border: 1px solid #969696;
+  vertical-align: middle;
 }
 
 .duration {
   background-color: #2d2d2d;
   color: #969696;
   border-radius: 25px;
-  border-color: #969696;
 }
 #duration {
   background-color: #2d2d2d;
-  width: 25%;
   color: #969696;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   border-radius: 25px;
-  border-color: #969696;
-  overflow: hidden;  
-  border: 1px solid #ccc; 
-}
-#duration::after {
-  content: "";
-  display: table;
-  clear: both;
+  overflow: hidden;
+  border: 1px solid #969696;
+  /* background-color: #2d2d2d;
+  color: #969696; */
 }
 #duration input {
-  float: left;               /* 1. Aligns elements perfectly side-by-side without whitespace gaps */
-  box-sizing: border-box;    /* 2. Includes padding/borders inside the width calculation */
-  width: 50%;                /* 3. Assumes 2 inputs sharing 100% space. Adjust if you have 3 inputs (33.33%) */
-  background: transparent;   /* 4. Removes default browser background color */
-  border: none;              /* 5. Removes default browser border layout */
-  margin: 0;                 /* 6. Removes default browser input margins */
-  color: inherit; 
-  padding: 10px 15px; 
-  outline: none; 
-  
-  /* float: left;
-  margin: 0;
-  border: none;
-  padding: 10px 15px;
-  outline: none; */
+  background-color: #2d2d2d;
+  color: #969696;
+  border: none; 
+  padding: 12px;
+  outline: none;
+  width: 100%;
+  height: 27.6px;
+  margin: 0 auto;
 }
 #duration input:not(:last-child) {
-  border-right: 1px solid #ccc;
-}
-#duration:focus-within {
-  border-color: #007fff;
-  box-shadow: 0 0 0 2px rgba(0, 127, 225, 0.2);
+  border-right: 1px solid #969696;
 }
 
-#avg_hr {  background-color: #2d2d2d;
+#avg_hr {  
+  background-color: #2d2d2d;
   color: #969696;
   border-radius: 25px;
-  border-color: #969696;
-  width: 150px;
+  border: 1px solid #969696;
+  padding: 0 10px;
 }
 
 #max_hr {
   background-color: #2d2d2d;
   color: #969696;
   border-radius: 25px;
-  border-color: #969696;
-  width: 150px;
+  border: 1px solid #969696;
+  padding: 0 10px;
 }
 
 #notes {
   background-color: #2d2d2d;
   color: #969696;
   border-radius: 25px;
-  border-color: #969696;
-  width: 300px;
-  height: 50px;
+  border: 1px solid #969696;
+  padding: 0 10px;
 }
 
 #elevation {
   background-color: #2d2d2d;
   color: #969696;
   border-radius: 25px;
-  border-color: #969696;
-  width: 150px;
+  border: 1px solid #969696;
+  padding: 0 10px;
 }
 
 #calories {
   background-color: #2d2d2d;
   color: #969696;
   border-radius: 25px;
-  border-color: #969696;
-  width: 150px;
+  border: 1px solid #969696;
+  padding: 0 10px;
 }
 
 #cadence {
   background-color: #2d2d2d;
   color: #969696;
   border-radius: 25px;
-  border-color: #969696;
-  width: 150px;
+  border: 1px solid #969696;
+  padding: 0 10px;
 }
 
 #power {
   background-color: #2d2d2d;
   color: #969696;
   border-radius: 25px;
-  border-color: #969696;
-  width: 150px;
+  border: 1px solid #969696;
+  padding: 0 10px;
 }

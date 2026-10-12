@@ -151,58 +151,69 @@ function Training() {
           </main>
 
           <aside id="sideBar" className="col-4">
-            <div className="w-100 p-3" id="firstrow">
-            <label>Activity Title 
-              <br></br>
-              <input id="activity_title" type="text"></input>
-            </label>
+            
+            <div className="row">
+              <div className="p-3 col-6" id="firstrow">
+              <label className="w-100">Activity Title 
+                <br></br>
+                <input id="activity_title" type="text"></input>
+              </label>
+              </div>
+
+              <div className="p-3 col-6" id="firstrow">
+              <label className="w-100">Activity Type 
+                <br></br>
+                <select id="activity_select" defaultValue="0">
+                  <option value="0"> -- Base Activity --</option>
+                </select>
+              </label>
+              </div>
             </div>
 
-            <div className="w-100 p-3" id="firstrow">
-            <label>Activity Type 
-              <br></br>
-              <select id="activity_select" defaultValue="0">
-                <option value="0"> -- Base Activity --</option>
-              </select>
-            </label>
+            <div className="row">
+              <div className="p-3 col-6" id="secondrow">
+              <label>Distance 
+                <br></br>
+                <div className="distance">
+                <input id="distance" type="number"></input>
+                <select id="distanceDrop" defaultValue="0">
+                  <option value="0">mi</option>
+                  <option value="1">km</option>
+                </select>
+                </div>
+                {/* Need some way to track total miles/kilometers already traveled */}
+              </label>
+              </div>
+
+              <div className="p-3 col-6" id="secondrow">
+              <label className="duration w-100">Duration
+                <br></br>
+                <div id="duration">
+                <input type="number"></input>
+                <input type="number"></input>
+                <input type="number"></input>
+                </div>
+                {/* Need some way to track total time (System.currentTimeMillis()???) */}
+              </label>
+              </div>
             </div>
 
-            <div className="w-100 p-3" id="secondrow">
-            <label>Distance 
-              <br></br>
-              <input id="distance" type="number"></input>
-              <select id="distanceDrop" defaultValue="0">
-                <option value="0">mi</option>
-                <option value="1">km</option>
-              </select>
-              {/* Need some way to track total miles/kilometers already traveled */}
-            </label>
-            </div>
+            <div className="row">
+              <div className="p-3 col-6" id="thirdrow">
+              <label className="w-100">Avg HR
+                <br></br>
+                <input id="avg_hr" type="number"></input>
+                {/* Need some way to add bpm */}
+              </label>
+              </div>
 
-            <div className="w-100 p-3" id="secondrow">
-            <label className="duration">Duration
-              <br></br>
-              <input id="duration" type="number"></input>
-              <input id="duration" type="number"></input>
-              <input id="duration" type="number"></input>
-              {/* Need some way to track total time (System.currentTimeMillis()???) */}
-            </label>
-            </div>
-
-            <div className="w-100 p-3" id="thirdrow">
-            <label>Avg HR
-              <br></br>
-              <input id="avg_hr" type="number"></input>
-              {/* Need some way to add bpm */}
-            </label>
-            </div>
-
-            <div className="w-100 p-3" id="thirdrow">
-            <label>Max HR
-              <br></br>
-              <input id="max_hr" type="number"></input>
-              {/* Need some way to add bpm */}
-            </label>
+              <div className="p-3 col-6" id="thirdrow">
+              <label className="w-100">Max HR
+                <br></br>
+                <input id="max_hr" type="number"></input>
+                {/* Need some way to add bpm */}
+              </label>
+              </div>
             </div>
 
             {/* <div className="side">
@@ -212,43 +223,49 @@ function Training() {
               </label>
             </div> */}
 
-            <div className="w-100 p-3">
-              <label>Notes
-                <br></br>
-                <input id="notes" type="text"></input>
-              </label>
+            <div className="row">
+              <div className="p-3 col-12">
+                <label className="w-100">Notes
+                  <br></br>
+                  <input id="notes" type="text"></input>
+                </label>
+              </div>
             </div>
             
-            <div className="w-100 p-3">
-              <label>Elevation
-                <br></br>
-                <input id="elevation" type="number"></input>
-                {/* Some way to add feet */}
-              </label>
+            <div className="row">
+              <div className="p-3 col-6">
+                <label className="w-100">Elevation
+                  <br></br>
+                  <input id="elevation" type="number"></input>
+                  {/* Some way to add feet */}
+                </label>
+              </div>
+
+              <div className="p-3 col-6">
+                <label className="w-100">Calories
+                  <br></br>
+                  <input id="calories" type="number"></input>
+                  {/* Some way to add Cal */}
+                </label>
+              </div>
             </div>
 
-            <div className="w-100 p-3">
-              <label>Calories
-                <br></br>
-                <input id="calories" type="number"></input>
-                {/* Some way to add Cal */}
-              </label>
-            </div>
+            <div className="row">
+              <div className="p-3 col-6">
+                <label className="w-100">Cadence
+                  <br></br>
+                  <input id="cadence" type="number"></input>
+                  {/* Some way to add feet */}
+                </label>
+              </div>
 
-            <div className="w-100 p-3">
-              <label>Cadence
-                <br></br>
-                <input id="cadence" type="number"></input>
-                {/* Some way to add feet */}
-              </label>
-            </div>
-
-            <div className="w-100 p-3">
-              <label>Power
-                <br></br>
-                <input id="power" type="number"></input>
-                {/* Some way to add Cal */}
-              </label>
+              <div className="p-3 col-6">
+                <label className="w-100">Power
+                  <br></br>
+                  <input id="power" type="number"></input>
+                  {/* Some way to add Cal */}
+                </label>
+              </div>
             </div>
 
           </aside>
