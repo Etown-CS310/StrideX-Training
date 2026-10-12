@@ -60,6 +60,59 @@ export function parseCsvBytes(bytes: Uint8Array) {
 }
 
 /**
+ * Splits CSV text into rows of fields. Quotes around fields are removed.
+ * @param text The decoded CSV text.
+ * @returns A list of rows, each row being a list of field strings. Blank lines are skipped.
+ */
+export function csvToRows(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+
+    if (char == '"') {
+      // Two quotes in a row inside a quoted field means one literal quote
+      if (inQuotes && text[i + 1] == '"') {
+        field += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (!inQuotes && char == ',') {
+      row.push(field);
+      field = '';
+    } else if (!inQuotes && (char == '\n' || char == '\r')) {
+      if (char == '\r' && text[i + 1] == '\n') i++;
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = '';
+    } else {
+      field += char;
+    }
+  }
+
+  // Last line might not end with a newline
+  if (field != '' || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+
+  // Drop blank lines (a row with one empty field)
+  const nonEmptyRows: string[][] = [];
+  for (const r of rows) {
+    if (r.length == 1 && r[0].trim() == '') {
+      continue;
+    }
+    nonEmptyRows.push(r);
+  }
+  return nonEmptyRows;
+}
+
+/**
  * Converts a CSV file to a Uint8Array for parsing.
  * @param file The CSV file to parse.
  * @returns A promise that resolves to the parsed CSV data.
