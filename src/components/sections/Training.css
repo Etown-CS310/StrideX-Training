@@ -9,26 +9,18 @@
   grid-column: 1 / 8;
 }
 
-.react-calendar__month-view__weekdays {
-  text-align: center;
-  text-transform: uppercase;
-  font: inherit;
-  /* font-size: 0.75em; */
-  font-weight: bold;
-}
-
 .react-calendar__month-view__weekdays__weekday {
   display: flex;
   justify-content: center;
-  /* padding: 0.5rem 0; */
+  padding: 0.25rem;
 }
 
 .react-calendar__month-view__weekdays__weekday abbr {
-  color: #969696;
+  color: var(--bs-stridex-lightgrey);
   text-decoration: none;
   font-weight: 400;
   text-transform: uppercase;
-  /* font-size: 0.75rem; */
+  font-size: 0.75rem;
   cursor: default;
 }
 
@@ -36,30 +28,31 @@
   display: grid !important;
   grid-template-columns: repeat(7, 1fr);
 
-  border-top: 1px solid #969696;
+  border-top: 1px solid var(--bs-stridex-lightgrey);
 }
 
 .react-calendar__tile {
-  border-right: 1px solid #969696;
-  border-bottom: 1px solid #969696;
+  border-right: 1px solid var(--bs-stridex-lightgrey);
+  border-bottom: 1px solid var(--bs-stridex-lightgrey);
   border-top: none;
   border-left: none;
 
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 1 / 2;
 }
 
 .react-calendar__tile:nth-last-child(-n+7) {
   border-bottom: none;
 }
 
+.react-calendar__tile abbr {
+  font-size: 0.75em;
+  padding: 0.125rem;
+}
+
 .react-calendar__tile--now abbr {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
   border-radius: 50%;
   background-color: #1F8F1F;
+  aspect-ratio: 1 / 1;
 }
 
 /* Totals column styling */
@@ -68,15 +61,8 @@
 }
 
 .totals-label {
-  text-align: center;
-  text-transform: uppercase;
-  font: inherit;
-  /* font-size: 0.75em;
-  padding: 0.5rem 0; */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #1F8F1F;
+  font-size: 0.75em;
+  font-weight: 400;
 }
 
 .week-totals {
@@ -85,8 +71,30 @@
 }
 
 .week-total-cell {
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 1 / 2;
 }
+
+@media (min-width: 480px) {
+  .react-calendar__tile,
+  .week-total-cell {
+    aspect-ratio: 2 / 3;
+  }
+}
+
+@media (min-width: 576px) {
+  .react-calendar__tile,
+  .week-total-cell {
+    aspect-ratio: 3 / 4;
+  }
+}
+
+@media (min-width: 1200px) {
+  .react-calendar__tile,
+  .week-total-cell {
+    aspect-ratio: 1 / 1;
+  }
+}
+
 
 /* Sidebar styling */
 

@@ -24,9 +24,15 @@ $utilities: (
     property: transition,
     class: transition,
     values: (
-      "bg": background-color 0.3s ease
+      "bg": background-color 0.15s ease
     )
   )
+);
+
+// Merge half spacer into Bootstrap's default spacers
+$spacers: map-merge(
+  $spacers,
+  ("05": 0.125rem)
 );
 
 // Use sans-serif as the default font family and Orbitron for headings
@@ -38,4 +44,8 @@ $headings-font-family: "Orbitron", sans-serif;
 // Orbitron font family variable to be used in custom components
 :root {
   --stridex-font-heading: "Orbitron", sans-serif;
+}
+
+.btn-outline-stridex-lightgrey {
+  --bs-btn-active-border-color: #fff;
 }
