@@ -76,7 +76,7 @@ function Training() {
     <div className="training bg-stridex-grey">
       <div className="container">
         <div className="row py-2">
-          <main className="col-8">
+          <main className="col-12 col-lg-8 col-xl-9">
             {/* Calendar */}
             <div className="calendar-header d-flex align-items-center justify-content-between mb-2">
               <div className="header-controls d-flex align-items-center gap-1">
@@ -105,20 +105,20 @@ function Training() {
               
               <div className="upload-container d-flex align-items-center gap-2">
                 <button
-                  className="upload-circle btn btn-outline-stridex-lightgrey text-white rounded-circle d-inline-flex align-items-center justify-content-center p-2 transition-bg hover-bg-stridex-lightgrey-hover"
+                  className="upload-circle btn btn-outline-stridex-lightgrey text-white rounded-circle d-inline-flex align-items-center justify-content-center p-2"
                   onClick={manualUpload}
                 >
                   <PlusLg size={20} />
                 </button>
 
-                <label htmlFor="fit-upload" className="upload-circle btn btn-outline-stridex-lightgrey text-white rounded-circle d-inline-flex align-items-center justify-content-center p-2 transition-bg hover-bg-stridex-lightgrey-hover">
+                <label htmlFor="fit-upload" className="upload-circle btn btn-outline-stridex-lightgrey text-white rounded-circle d-inline-flex align-items-center justify-content-center p-2">
                   <Upload size={20} />
                   <input
                     id="fit-upload"
                     type="file"
                     accept=".fit"
                     onChange={handleFileChange}
-                    className="d-none"
+                    className="visually-hidden"
                   />
                 </label>
               </div>
@@ -129,18 +129,19 @@ function Training() {
                 value={value}
                 activeStartDate={activeStartDate ?? undefined}
                 onActiveStartDateChange={({ activeStartDate }) => setActiveStartDate(activeStartDate)}
-                tileClassName="d-flex flex-column align-items-center justify-content-start rounded-0 bg-transparent overflow-x-hidden text-light"
+                tileClassName="d-flex flex-column align-items-center justify-content-start rounded-0 p-05 gap-05 gap-md-1 bg-transparent overflow-x-hidden text-light"
                 tileContent={({ date }) => hasActivity(date) && (
                   <>
-                    <span className="badge rounded-pill bg-stridex-lightgrey mb-1">Afternoon Run</span>
-                    {/* <span className="badge rounded-pill bg-stridex-lightgrey mb-1">Physical Therapy</span> */}
+                    {/* <span className="badge rounded-pill bg-stridex-lightgrey fw-normal text-truncate w-100 mw-100 p-05 p-md-1">
+                      Afternoon Run
+                    </span> */}
                   </>
                 )}
                 showNavigation={false}
               />
               {/* Extra calendar column for activity totals */}
               <div className="totals-column">
-                <div className="totals-label">SUM</div>
+                <div className="totals-label d-flex align-items-center justify-content-center text-center text-uppercase text-stridex-darkgreen p-1">SUM</div>
                 <div className="week-totals" style={{ '--row-count': rowCount } as React.CSSProperties}>
                   {Array.from({ length: rowCount }).map((_, i) => (
                     <div key={i} className="week-total-cell d-flex align-items-start justify-content-start border-stridex-lightgrey border-top rounded-0 bg-transparent text-light" />
@@ -150,7 +151,7 @@ function Training() {
             </div>
           </main>
 
-          <aside id="sideBar" className="col-4">
+          <aside id="sideBar" className="col-12 col-lg-4 col-xl-3">
             
             <div className="row">
               <div className="p-3 col-6" id="firstrow">
