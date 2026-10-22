@@ -4,7 +4,7 @@ import { db } from '../firebase';
 import type { ActivityUpload } from './activityMapper';
 
 // No login yet, so everything goes to the seeded demo user
-const USER_ID = 'demo-user';
+export const USER_ID = 'demo-user';
 
 /**
  * Saves one activity to Firestore, then saves its laps in the activity's "laps" subcollection.

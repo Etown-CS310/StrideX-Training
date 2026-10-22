@@ -1,16 +1,41 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Calendar from 'react-calendar';
 import { ChevronLeft, ChevronRight, PlusLg, Upload } from 'react-bootstrap-icons'
 import type { Value } from 'react-calendar/dist/shared/types.js';
 
 import ActivitySidebar from '../ui/ActivitySidebar';
 import { parseFitFile } from '../../scripts/fitParser';
+import { dateKey, loadActivities, type Activity } from '../../scripts/loadActivities';
 
 import './Training.css';
 
 function Training() {
   const [value, setValue] = useState<Value>(new Date());
   const [activeStartDate, setActiveStartDate] = useState<Date | null>(new Date());
+
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    loadActivities()
+      .then(setActivities)
+      .catch((err) => {
+        console.error('Error loading activities:', err);
+        setLoadError('Could not load activities');
+      });
+  }, []);
+
+  const activitiesByDay = new Map<string, Activity[]>();
+  for (const activity of activities) {
+    if (activity.startTime == null) {
+      continue;
+    }
+    const key = dateKey(activity.startTime);
+    const dayActivities = activitiesByDay.get(key) ?? [];
+    dayActivities.push(activity);
+    activitiesByDay.set(key, dayActivities);
+  }
 
   function goToPrevMonth() {
     setActiveStartDate((prev) => {
@@ -51,10 +76,6 @@ function Training() {
 
   function manualUpload() {
     return;
-  }
-
-  function hasActivity(date: Date) {
-    return date.getDate() % 2 === 0; // Example: return true for even dates
   }
 
   /**
@@ -137,6 +158,9 @@ function Training() {
                 </label>
               </div>
             </div>
+            {loadError !== '' && (
+              <div className="alert alert-danger py-2">{loadError}</div>
+            )}
             <div className="calendar-with-totals bg-stridex-black border border-stridex-lightgrey rounded-4">
               <Calendar
                 onChange={setValue}
@@ -144,11 +168,20 @@ function Training() {
                 activeStartDate={activeStartDate ?? undefined}
                 onActiveStartDateChange={({ activeStartDate }) => setActiveStartDate(activeStartDate)}
                 tileClassName="d-flex flex-column align-items-center justify-content-start rounded-0 p-05 gap-05 gap-md-1 bg-transparent overflow-x-hidden text-light"
-                tileContent={({ date }) => hasActivity(date) && (
+                tileContent={({ date, view }) => view === 'month' && (
                   <>
-                    <span className="badge rounded-pill bg-stridex-grey fw-normal text-truncate w-100 mw-100 p-05 p-md-1">
-                      Afternoon Run
-                    </span>
+                    {(activitiesByDay.get(dateKey(date)) ?? []).map((activity) => (
+                      <span
+                        key={activity.id}
+                        role="button"
+                        className={'badge rounded-pill fw-normal text-truncate w-100 mw-100 p-05 p-md-1 ' +
+                          (activity.id === selectedId ? 'bg-stridex-green text-stridex-black' : 'bg-stridex-grey')}
+                        title={activity.title}
+                        onClick={() => setSelectedId(activity.id)}
+                      >
+                        {activity.title}
+                      </span>
+                    ))}
                   </>
                 )}
                 showNavigation={false}
