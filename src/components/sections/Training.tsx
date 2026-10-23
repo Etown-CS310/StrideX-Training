@@ -247,11 +247,11 @@ function Training() {
                 <input 
                   id="avg_hr" 
                   type="number" 
-                  className="w-75 form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                  className="form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
                 ></input>
                 <label 
                   id="avg_hr_stay" 
-                  className="w-25 input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                  className="input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
                 >bpm</label>
               </div>
               </div>
@@ -262,11 +262,11 @@ function Training() {
                 <input
                   id="max_hr" 
                   type="number" 
-                  className="w-75 form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                  className="form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
                 ></input>
                 <label 
                   id="max_hr_stay" 
-                  className="w-25 input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                  className="input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
                 >bpm</label>
               </div>
               </div>
@@ -302,11 +302,11 @@ function Training() {
                   <input 
                     id="elevation" 
                     type="number" 
-                    className="w-75 form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                    className="form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
                   ></input>
                   <label 
                     id="elevation_stay" 
-                    className="w-25 input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                    className="input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
                   >ft</label>
                 </div>
               </div>
@@ -317,11 +317,11 @@ function Training() {
                   <input 
                     id="calories" 
                     type="number" 
-                    className="w-75 form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                    className="form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
                   ></input>
                   <label 
                     id="calories_stay" 
-                    className="w-25 input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                    className="input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
                   >Cal</label>
                 </div>
               </div>
@@ -335,11 +335,11 @@ function Training() {
                   <input 
                     id="cadence" 
                     type="number" 
-                    className="w-75 form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                    className="form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
                   ></input>
                   <label 
                     id="cadence_stay" 
-                    className="w-25 input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                    className="input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
                   >ft</label>
                 </div>
               </div>
@@ -350,11 +350,11 @@ function Training() {
                   <input 
                     id="power" 
                     type="number" 
-                    className="w-75 form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                    className="form-control rounded-end-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
                   ></input>
                   <label 
                     id="power_stay" 
-                    className="w-25 input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
+                    className="input-group-text rounded-start-0 bg-transparent rounded-pill p-1 px-2 text-stridex-lightgrey border border-1 border-stridex-lightgrey"
                   >Cal</label>
                 </div>
               </div>
