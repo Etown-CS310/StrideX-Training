@@ -70,6 +70,7 @@
   grid-template-rows: repeat(var(--row-count, 6), 1fr);
 }
 
+/* Responsive cell styling */
 .week-total-cell {
   aspect-ratio: 1 / 2;
 }
@@ -88,30 +89,61 @@
   }
 }
 
+@media (min-width: 992px) {
+  .react-calendar__tile,
+  .week-total-cell {
+    aspect-ratio: 4 / 7;
+  }
+}
+
 @media (min-width: 1200px) {
   .react-calendar__tile,
   .week-total-cell {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 2 / 3;
+  }
+}
+
+@media (min-width: 1400px) {
+  .react-calendar__tile,
+  .week-total-cell {
+    aspect-ratio: 6 / 7;
   }
 }
 
 
+
 /* Sidebar styling */
-
-#sideBar {
-  padding-right: 10px;
-  color: #969696;
-}
-
-/* #activity_select {
-  box-sizing: content-box;
-} */
- 
 #duration {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   overflow: hidden;
 }
- 
 
+/* Hide number stepper */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.lap-table {
+  --bs-table-bg: transparent;
+  --bs-table-color: #fff;
+}
+
+.type-col {
+  width: 30%;
+}
+
+.stats-col {
+  width: 43%;
+}
+
+.hr-col {
+  width: 27%;
+}

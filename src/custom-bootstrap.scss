@@ -1,8 +1,6 @@
 @import "bootstrap/scss/functions";
-@import "bootstrap/scss/variables";
-@import "bootstrap/scss/variables-dark";
 
-// Merge StrideX branding colors into bootstraps theme colors 
+// Plain overrides go BEFORE variables, since Bootstrap derives values from them
 $custom-colors: (
   "stridex-green": #32cd32,
   "stridex-darkgreen": #1F8F1F,
@@ -10,42 +8,90 @@ $custom-colors: (
   "stridex-grey": #2D2D2D,
   "stridex-lightgrey": #969696,
 );
+
+// Placeholder
+$input-placeholder-color: map-get($custom-colors, "stridex-lightgrey");
+
+// Smaller input and form-select sizes
+$input-padding-y-sm: 0.125rem;
+$input-padding-x-sm: 0.375rem;
+$input-font-size-sm: 0.8125rem;
+
+$form-select-padding-y-sm: 0.125rem;
+$form-select-padding-x-sm: 0.375rem;
+$form-select-font-size-sm: 0.8125rem;
+
+// Dropdown caret
+$form-select-indicator-color: #fff;
+$form-select-indicator-padding: 1.5rem;
+$form-select-bg-size: 12px 10px;
+$form-select-bg-position: right 0.5rem center;
+
+// Fonts
+$font-family-sans-serif: sans-serif;
+$headings-font-family: "Orbitron", sans-serif;
+
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+
+// Things that extend Bootstrap's own maps must come AFTER variables
 $theme-colors: map-merge($theme-colors, $custom-colors);
 
-// Custom hover and transition utilities for StrideX branding colors
+$spacers: map-merge($spacers, ("05": 0.125rem));
+
 $utilities: (
   "hover-bg": (
     property: background-color,
     class: hover-bg,
     state: hover,
-    values: $custom-colors
+    values: $theme-colors
   ),
   "transition": (
     property: transition,
     class: transition,
     values: (
-      "bg": background-color 0.15s ease
+      "bg": background-color 0.15s ease,
+      "ui": (background-color 0.3s ease, border-color 0.2s ease, box-shadow 0.2s ease)
     )
   )
 );
-
-// Merge half spacer into Bootstrap's default spacers
-$spacers: map-merge(
-  $spacers,
-  ("05": 0.125rem)
-);
-
-// Use sans-serif as the default font family and Orbitron for headings
-$font-family-sans-serif: sans-serif;
-$headings-font-family: "Orbitron", sans-serif;
 
 @import "bootstrap/scss/bootstrap";
 
 // Orbitron font family variable to be used in custom components
 :root {
   --stridex-font-heading: "Orbitron", sans-serif;
+  color-scheme: dark;
 }
 
-.btn-outline-stridex-lightgrey {
-  --bs-btn-active-border-color: #fff;
+// Dropdown styles
+option {
+  background-color: var(--bs-stridex-black);
+  color: #fff;
+}
+
+.form-select-sm {
+  padding-right: 1.25rem;
+  background-position: right 0.4rem center;
+  background-size: 10px 8px;
+}
+
+// Custom focus styles for pills
+.focus-stridex {
+  &:focus,
+  &:focus-visible,
+  &:focus-within {
+    outline: none;
+    border-color: var(--bs-stridex-green) !important;
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-stridex-green-rgb), 0.25) !important;
+  }
+}
+
+.focus-danger {
+  &:focus,
+  &:focus-visible {
+    outline: none;
+    border-color: var(--bs-danger) !important;
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-danger-rgb), 0.25) !important;
+  }
 }
