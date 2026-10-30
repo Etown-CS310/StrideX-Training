@@ -37,6 +37,13 @@ function Training() {
     activitiesByDay.set(key, dayActivities);
   }
 
+  const selectedActivity = activities.find((activity) => activity.id === selectedId) ?? null;
+
+  // Swap in the saved version so the calendar updates without reloading
+  function saveActivity(updated: Activity) {
+    setActivities((prev) => prev.map((activity) => (activity.id === updated.id ? updated : activity)));
+  }
+
   function goToPrevMonth() {
     setActiveStartDate((prev) => {
       const base = prev ?? new Date();
@@ -199,7 +206,13 @@ function Training() {
           </main>
 
           <aside id="sideBar" className="col-12 col-lg-4 col-xxl-3 ps-lg-3 ps-xxl-4">
-            <ActivitySidebar />
+            {/* key makes the form reload its fields when a different activity is selected */}
+            <ActivitySidebar
+              key={selectedId ?? 'none'}
+              activity={selectedActivity}
+              onSave={saveActivity}
+              onCancel={() => setSelectedId(null)}
+            />
           </aside>
         </div>
       </div>
