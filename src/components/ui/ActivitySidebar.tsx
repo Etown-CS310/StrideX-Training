@@ -3,37 +3,162 @@ import { PlusLg, PencilSquare } from 'react-bootstrap-icons';
 
 import LapRow from '../ui/LapRow';
 import { createEmptyLap, type Lap } from '../../types/lap';
-import { formatDuration } from '../../scripts/time';
+import { formatDuration, fromSeconds } from '../../scripts/time';
+import type { Activity } from '../../scripts/loadActivities';
+import { updateActivity, type ActivityChanges } from '../../scripts/updateActivity';
 import './ActivitySidebar.css';
 import LapDisplayRow from './LapDisplayRow';
 
-function ActivitySidebar() {
-  const [title, setTitle] = useState<string | null>(null);
-  const [type, setType] = useState<string>('Default');
+// Firestore stores meters, the form shows miles/km and feet
+const METERS_PER_MILE = 1609.344;
+const METERS_PER_KM = 1000;
+const METERS_PER_FOOT = 0.3048;
 
-  const [distance, setDistance] = useState<number | null>(null);
-  const [distanceUnit, setDistanceUnit] = useState<string>('mi');
-  const [hours, setHours] = useState<number | null>(null);
-  const [minutes, setMinutes] = useState<number | null>(null);
-  const [seconds, setSeconds] = useState<number | null>(null);
+const ACTIVITY_TYPES = ['run', 'bike', 'swim'];
+
+interface ActivitySidebarProps {
+  activity?: Activity | null;
+  onSave?: (updated: Activity) => void;
+  onCancel?: () => void;
+}
+
+/**
+ * Converts a stored activity into the values shown in the form.
+ * @param activity - The activity to show, or null for an empty form.
+ * @returns The form values.
+ */
+function formFromActivity(activity: Activity | null | undefined) {
+  let time: ReturnType<typeof fromSeconds> | null = null;
+  if (activity?.duration != null) {
+    time = fromSeconds(Math.round(activity.duration));
+  }
+
+  let distance: number | null = null;
+  if (activity?.distance != null) {
+    distance = Math.round((activity.distance / METERS_PER_MILE) * 100) / 100;
+  }
+
+  let elevation: number | null = null;
+  if (activity?.elevation != null) {
+    elevation = Math.round(activity.elevation / METERS_PER_FOOT);
+  }
+
+  return {
+    title: activity?.title ?? null,
+    type: activity?.type ?? 'Default',
+    distance: distance,
+    distanceUnit: 'mi',
+    hours: time?.hours ?? null,
+    minutes: time?.minutes ?? null,
+    seconds: time?.seconds ?? null,
+    avgHR: activity?.hrAvg ?? null,
+    maxHR: activity?.hrMax ?? null,
+    notes: activity?.notes ?? null,
+    elevation: elevation,
+    calories: activity?.calories ?? null,
+    cadence: activity?.cadence ?? null,
+    power: activity?.power ?? null,
+  };
+}
+
+function ActivitySidebar({ activity, onSave, onCancel }: ActivitySidebarProps) {
+  // Values the form started with, used to only save fields that were changed
+  const [initial, setInitial] = useState(() => formFromActivity(activity));
+
+  const [title, setTitle] = useState<string | null>(initial.title);
+  const [type, setType] = useState<string>(initial.type);
+
+  const [distance, setDistance] = useState<number | null>(initial.distance);
+  const [distanceUnit, setDistanceUnit] = useState<string>(initial.distanceUnit);
+  const [hours, setHours] = useState<number | null>(initial.hours);
+  const [minutes, setMinutes] = useState<number | null>(initial.minutes);
+  const [seconds, setSeconds] = useState<number | null>(initial.seconds);
 
   const totalSeconds = (hours ?? 0) * 3600 + (minutes ?? 0) * 60 + (seconds ?? 0);
 
-  const [avgHR, setAvgHR] = useState<number | null>(null);
-  const [maxHR, setMaxHR] = useState<number | null>(null);
+  const [avgHR, setAvgHR] = useState<number | null>(initial.avgHR);
+  const [maxHR, setMaxHR] = useState<number | null>(initial.maxHR);
 
   const [laps, setLaps] = useState<Lap[]>([]);
   const [lapForm, setLapForm] = useState<Lap>(createEmptyLap());
 
-  const [notes, setNotes] = useState<string | null>(null);
+  const [notes, setNotes] = useState<string | null>(initial.notes);
 
-  const [elevation, setElevation] = useState<number | null>(null);
-  const [calories, setCalories] = useState<number | null>(null);
+  const [elevation, setElevation] = useState<number | null>(initial.elevation);
+  const [calories, setCalories] = useState<number | null>(initial.calories);
 
-  const [cadence, setCadence] = useState<number | null>(null);
-  const [power, setPower] = useState<number | null>(null);
+  const [cadence, setCadence] = useState<number | null>(initial.cadence);
+  const [power, setPower] = useState<number | null>(initial.power);
 
   const [lapEditEnabled, setLapEditEnabled] = useState<boolean>(false);
+
+  const [saving, setSaving] = useState<boolean>(false);
+  const [saveError, setSaveError] = useState<string>('');
+
+  const form = {
+    title, type, distance, distanceUnit, hours, minutes, seconds,
+    avgHR, maxHR, notes, elevation, calories, cadence, power,
+  };
+
+  /**
+   * Compares the form to its starting values and converts the changed fields back to Firestore units.
+   * @returns Only the fields that were changed.
+   */
+  const getChanges = (): ActivityChanges => {
+    const changes: ActivityChanges = {};
+
+    if (title !== initial.title) changes.title = title ?? '';
+    if (type !== initial.type) changes.type = type;
+
+    if (distance !== initial.distance || distanceUnit !== initial.distanceUnit) {
+      const metersPerUnit = distanceUnit === 'km' ? METERS_PER_KM : METERS_PER_MILE;
+      changes.distance = distance == null ? null : Math.round(distance * metersPerUnit);
+    }
+
+    if (hours !== initial.hours || minutes !== initial.minutes || seconds !== initial.seconds) {
+      const durationEmpty = hours == null && minutes == null && seconds == null;
+      changes.duration = durationEmpty ? null : totalSeconds;
+    }
+
+    if (avgHR !== initial.avgHR) changes.hrAvg = avgHR;
+    if (maxHR !== initial.maxHR) changes.hrMax = maxHR;
+    if (notes !== initial.notes) changes.notes = notes ?? '';
+
+    if (elevation !== initial.elevation) {
+      changes.elevation = elevation == null ? null : Math.round(elevation * METERS_PER_FOOT);
+    }
+
+    if (calories !== initial.calories) changes.calories = calories;
+    if (cadence !== initial.cadence) changes.cadence = cadence;
+    if (power !== initial.power) changes.power = power;
+
+    return changes;
+  };
+
+  const changes = getChanges();
+  const hasChanges = Object.keys(changes).length > 0;
+
+  const saveActivityHandler = async () => {
+    if (activity == null || !hasChanges) return;
+
+    setSaving(true);
+    setSaveError('');
+    try {
+      await updateActivity(activity.id, changes);
+      setInitial(form);
+      onSave?.({ ...activity, ...changes });
+    } catch (error) {
+      console.error('Error saving activity:', error);
+      setSaveError('Could not save changes');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Show the stored type even if it isn't one of the usual options
+  const typeOptions = ACTIVITY_TYPES.includes(type) || type === 'Default'
+    ? ACTIVITY_TYPES
+    : [...ACTIVITY_TYPES, type];
 
   /**
    * Takes string and converts it to a number with optional max cap.
@@ -102,6 +227,11 @@ function ActivitySidebar() {
             aria-label="Activity Type"
           >
             <option value="Default">Default</option>
+            {typeOptions.map((option) => (
+              <option key={option} value={option}>
+                {option.charAt(0).toUpperCase() + option.slice(1)}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -356,6 +486,35 @@ function ActivitySidebar() {
           </div>
         </div>
       </div>
+
+      {activity != null && (
+        <div className="row">
+          <div className="col-12 p-2">
+            {saveError !== '' && (
+              <div className="alert alert-danger py-2">{saveError}</div>
+            )}
+            <div className="d-flex justify-content-end gap-2">
+              {/* Cancel (deselects the activity) */}
+              <button
+                onClick={onCancel}
+                disabled={saving}
+                className="btn btn-outline-light rounded-pill px-3 transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
+              >
+                Cancel
+              </button>
+
+              {/* Save (if something was changed) */}
+              <button
+                onClick={saveActivityHandler}
+                disabled={!hasChanges || saving}
+                className="btn bg-stridex-green text-stridex-black rounded-pill px-3 transition-ui hover-bg-stridex-darkgreen-hover focus-stridex"
+              >
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
