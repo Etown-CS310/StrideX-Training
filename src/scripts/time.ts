@@ -24,10 +24,11 @@ export const fromSeconds = (total: number) => ({
 /**
  * Formats a duration given in seconds into a string in the format "hh:mm:ss.cc".
  * @param total - Total seconds as a number.
+ * @param showCentiseconds - Whether to include centiseconds in the output (default: true).
  * @returns A formatted string representing the duration.
  */
-export const formatDuration = (total: number) => {
+export const formatDuration = (total: number, showCentiseconds: boolean = true) => {
   const { hours, minutes, seconds, centiseconds } = fromSeconds(total);
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}.${pad(centiseconds)}`;
+  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}${showCentiseconds ? `.${pad(centiseconds)}` : ''}`;
 };

@@ -13,7 +13,7 @@ export type Lap = {
 
 export const createEmptyLap = (): Lap => ({
   id: crypto.randomUUID(),
-  type: 'default',
+  type: 'Default',
   distance: null,
   distanceUnit: 'mi',
   duration: null,

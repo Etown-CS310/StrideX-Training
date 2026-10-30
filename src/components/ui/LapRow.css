@@ -1,0 +1,6 @@
+@keyframes row-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.row-enter { animation: row-in 0.75s ease; }
