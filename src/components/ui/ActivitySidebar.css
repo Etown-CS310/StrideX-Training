@@ -1,7 +1,8 @@
 .lap-scroll {
-  max-height: 420px;
+  max-height: 305px;
 }
 
+/* Header and Footer always visible */
 .lap-table thead {
   position: sticky;
   top: 0;

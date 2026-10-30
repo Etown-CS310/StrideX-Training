@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { TrashFill } from 'react-bootstrap-icons';
+
 import type { Lap } from '../../types/lap';
 import { fromSeconds, toSeconds } from '../../scripts/time';
+import { clampNumberInput } from '../../scripts/input';
+
+import './LapRow.css';
 
 /**
  * Handles the change of a number input, ensuring it's a valid number within the specified range.
@@ -22,18 +26,6 @@ function LapRows({ lap, idPrefix, onChange, onDelete }: { lap: Lap; idPrefix: st
   const set = <K extends keyof Lap>(field: K, value: Lap[K]) => onChange?.(field, value);
 
   /**
-   * Takes string and converts it to a number with optional max cap.
-   * @param raw - The raw string input to be converted to a number.
-   * @param max - The max cap for raw.
-   * @returns The converted number, or null if the input is empty.
-   */
-  const clampNumberInput = (raw: string, max?: number) => {
-    if (raw === '') return null;
-    const value = Math.max(Number(raw), 0);
-    return max !== undefined ? Math.min(value, max) : value;
-  };
-
-  /**
    * Updates the time fields (hours, minutes, seconds, centiseconds) and recalculates the total duration in seconds.
    * @param part - The part of the time to update ('hours', 'minutes', 'seconds', or 'centiseconds').
    * @param value - The new value for the specified part of the time.
@@ -50,9 +42,10 @@ function LapRows({ lap, idPrefix, onChange, onDelete }: { lap: Lap; idPrefix: st
   };
 
   return (
-    <tbody className="border-top border-stridex-lightgrey">
+    <tbody className="row-enter border-top border-stridex-lightgrey">
       <tr>
         <td>
+          {/* Lap Type */}
           <select
             id={`lap-type-${idPrefix}`}
             value={lap.type}
@@ -68,6 +61,7 @@ function LapRows({ lap, idPrefix, onChange, onDelete }: { lap: Lap; idPrefix: st
         </td>
 
         <td className="pt-2">
+          {/* Lap Distance */}
           <div className="input-group input-group-sm">
             <input
               id={`lap-distance-${idPrefix}`}
@@ -90,11 +84,12 @@ function LapRows({ lap, idPrefix, onChange, onDelete }: { lap: Lap; idPrefix: st
             </select>
           </div>
 
+          {/* Lap Time (in h:mm:ss.cc format) */}
           <div className="input-group input-group-sm flex-nowrap mt-1">
             <input
               id={`lap-hours-${idPrefix}`}
               type="number"
-              value={hours ?? ''}
+              value={hours ? (hours > 0 ? hours : '') : ''}
               onChange={(e) => updateTime('hours', clampNumberInput(e.target.value, 99))}
               placeholder="h"
               className="form-control rounded-start-pill text-center bg-stridex-grey text-white border-0 transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
@@ -104,7 +99,7 @@ function LapRows({ lap, idPrefix, onChange, onDelete }: { lap: Lap; idPrefix: st
             <input
               id={`lap-minutes-${idPrefix}`}
               type="number"
-              value={minutes ?? ''}
+              value={minutes ? (minutes > 0 ? minutes : '') : ''}
               onChange={(e) => updateTime('minutes', clampNumberInput(e.target.value, 59))}
               placeholder="mm"
               className="form-control text-center bg-stridex-grey text-white border-0 transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
@@ -114,9 +109,9 @@ function LapRows({ lap, idPrefix, onChange, onDelete }: { lap: Lap; idPrefix: st
             <input
               id={`lap-seconds-${idPrefix}`}
               type="number"
-              value={seconds ?? ''}
+              value={seconds ? (seconds > 0 ? seconds : '') : ''}
               onChange={(e) => updateTime('seconds', clampNumberInput(e.target.value, 59))}
-              placeholder="s"
+              placeholder="ss"
               className="form-control text-center bg-stridex-grey text-white border-0 transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
               aria-label="Seconds"
             />
@@ -124,7 +119,7 @@ function LapRows({ lap, idPrefix, onChange, onDelete }: { lap: Lap; idPrefix: st
             <input
               id={`lap-centiseconds-${idPrefix}`}
               type="number"
-              value={centiseconds ?? ''}
+              value={centiseconds ? (centiseconds > 0 ? centiseconds : '') : ''}
               onChange={(e) => updateTime('centiseconds', clampNumberInput(e.target.value, 99))}
               placeholder="cc"
               className="form-control rounded-end-pill text-center bg-stridex-grey text-white border-0 transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
@@ -134,6 +129,7 @@ function LapRows({ lap, idPrefix, onChange, onDelete }: { lap: Lap; idPrefix: st
         </td>
 
         <td className="pt-2">
+          {/* Lap Average Heart Rate */}
           <div className="input-group input-group-sm">
             <input
               id={`lap-avgHR-${idPrefix}`}
@@ -147,6 +143,8 @@ function LapRows({ lap, idPrefix, onChange, onDelete }: { lap: Lap; idPrefix: st
             />
             <span id={`lap-avgHR-unit-${idPrefix}`} className="input-group-text rounded-start-0 rounded-pill bg-stridex-grey text-white border-0">bpm</span>
           </div>
+
+          {/* Lap Maximum Heart Rate */}
           <div className="input-group input-group-sm mt-1">
             <input
               id={`lap-maxHR-${idPrefix}`}
@@ -165,6 +163,7 @@ function LapRows({ lap, idPrefix, onChange, onDelete }: { lap: Lap; idPrefix: st
 
       <tr>
         <td colSpan={3} className="pb-2">
+          {/* Lap Notes and Delete Button */}
           <div className="d-flex align-items-center gap-1">
             <textarea
               id={`lap-notes-${idPrefix}`}
@@ -176,6 +175,7 @@ function LapRows({ lap, idPrefix, onChange, onDelete }: { lap: Lap; idPrefix: st
               className="form-control form-control-sm rounded-4 bg-stridex-grey text-white border-0 transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
               aria-label="Lap Notes"
             />
+
             {(onDelete != null) && (
               <button
                 onClick={onDelete}
