@@ -8,15 +8,17 @@ import { formatDuration } from '../../scripts/time';
  */
 function LapDisplayRows({ lap, idPrefix }: { lap: Lap; idPrefix: string }) {
   return (
-    <tbody className="border-top border-stridex-lightgrey">
+    <tbody className="row-enter border-top border-stridex-lightgrey">
       <tr>
         <td className="px-2">
+          {/* Display Lap Type */}
           <p id={`lap-type-${idPrefix}-display`} className="text-stridex-lightgrey m-0" aria-label="Activity Type">
             {lap.type}
           </p>
         </td>
 
         <td className="px-2">
+          {/* Display Lap Distance */}
           {lap.distance !== null && (
             <div className="flex-nowrap">
               <p id={`lap-distance-${idPrefix}-display`} className="text-stridex-lightgrey m-0" aria-label="Lap Distance">
@@ -25,6 +27,7 @@ function LapDisplayRows({ lap, idPrefix }: { lap: Lap; idPrefix: string }) {
             </div>
           )}
 
+          {/* Display Lap Duration */}
           {lap.duration !== null && (
             <div className="flex-nowrap mt-1">
               <p id={`lap-time-${idPrefix}-display`} className="text-stridex-lightgrey m-0" aria-label="Lap Time">
@@ -35,6 +38,7 @@ function LapDisplayRows({ lap, idPrefix }: { lap: Lap; idPrefix: string }) {
         </td>
 
         <td className="px-2">
+          {/* Display Lap Average Heart Rate */}
           {lap.avgHR !== null && (
             <div className="flex-nowrap">
               <p id={`lap-avgHR-${idPrefix}-display`} className="text-stridex-lightgrey m-0" aria-label="Average Heart Rate">
@@ -43,6 +47,7 @@ function LapDisplayRows({ lap, idPrefix }: { lap: Lap; idPrefix: string }) {
             </div>
           )}
 
+          {/* Display Lap Maximum Heart Rate */}
           {lap.maxHR !== null && (
             <div className="flex-nowrap mt-1">
               <p id={`lap-maxHR-${idPrefix}-display`} className="text-stridex-lightgrey m-0" aria-label="Maximum Heart Rate">
@@ -53,6 +58,7 @@ function LapDisplayRows({ lap, idPrefix }: { lap: Lap; idPrefix: string }) {
         </td>
       </tr>
 
+      {/* Display Lap Notes */}
       {(lap.notes && lap.notes.trim() !== '') && (
         <tr>
           <td colSpan={3} className="px-1 pb-2">

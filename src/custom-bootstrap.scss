@@ -87,6 +87,15 @@ option {
   }
 }
 
+.focus-warning {
+  &:focus,
+  &:focus-visible {
+    outline: none;
+    border-color: var(--bs-warning) !important;
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-warning-rgb), 0.25) !important;
+  }
+}
+
 .focus-danger {
   &:focus,
   &:focus-visible {
