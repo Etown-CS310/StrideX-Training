@@ -118,7 +118,7 @@ function ActivitySidebar() {
   return (
     <>
       <div className="row">
-        <div className="col-6 p-2">
+        <div className="col-12 p-2">
           {/* Activity Title */}
           <label htmlFor="activity-title" className="form-label text-white">
             Activity Title
@@ -132,12 +132,31 @@ function ActivitySidebar() {
             className="form-control rounded-pill bg-transparent text-white border-white transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
           />
         </div>
+      </div>
+
+      <div className="row">
+        <div className="col-6 p-2">
+          {/* Activity Type */}
+          <label htmlFor="activity-select" className="form-label text-white">Activity</label>
+          <select
+            id="activity-select"
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            className="form-select rounded-pill bg-transparent text-white border-white transition-ui hover-bg-stridex-lightgrey-hover focus-stridex activity-input"
+            aria-label="Activity Type"
+          >
+
+            <option value="Default">Default</option>
+            <option value="Running">Running</option>
+          </select>
+        </div>
+
 
         <div className="col-6 p-2">
           {/* Activity Type */}
-          <label htmlFor="activity-select" className="form-label text-white">Activity Type</label> 
+          <label htmlFor="activity-type-select" className="form-label text-white">Activity Type</label> 
           <select
-            id="activity-select"
+            id="activity-type-select" //activity-type-select
             value={type}
             onChange={(e) => setType(e.target.value)}
             className="form-select rounded-pill bg-transparent text-white border-white transition-ui hover-bg-stridex-lightgrey-hover focus-stridex activity-input"
