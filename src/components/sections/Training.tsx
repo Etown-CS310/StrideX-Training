@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, PlusLg, Upload } from 'react-bootstrap-icons
 import type { Value } from 'react-calendar/dist/shared/types.js';
 
 import ActivitySidebar from '../ui/ActivitySidebar';
+import ViewSidebar from '../ui/ViewSidebar';
 import { parseFitFile } from '../../scripts/fitParser';
 
 import './Training.css';
@@ -167,6 +168,8 @@ function Training() {
 
           <aside id="sideBar" className="col-12 col-lg-4 col-xxl-3 ps-lg-3 ps-xxl-4">
             <ActivitySidebar />
+
+            <ViewSidebar />
           </aside>
         </div>
       </div>
