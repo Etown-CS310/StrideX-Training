@@ -13,3 +13,11 @@
 .nav .nav-link.active {
   color: var(--bs-stridex-green);
 }
+
+.nav .nav-btn {
+  background-color: var(--bs-stridex-grey);
+}
+
+.nav .nav-btn.active {
+  background-color: var(--bs-stridex-darkgreen);
+}
