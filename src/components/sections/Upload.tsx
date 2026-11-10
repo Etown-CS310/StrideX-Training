@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { CloudArrowUp, Eraser, FileEarmarkArrowUp, Floppy, PencilSquare } from 'react-bootstrap-icons';
 
 import { csvToRows, parseCsvFile } from '../../scripts/csvParser';
@@ -15,6 +15,7 @@ import {
 import { uploadActivity } from '../../scripts/uploadActivity';
 import { clampNumberInput } from '../../scripts/input';
 import { formatDuration } from '../../scripts/time';
+import { ACTIVITY_TYPES, WORKOUT_TYPES } from '../../scripts/activityTypes';
 
 import './Upload.css';
 
@@ -22,8 +23,6 @@ import './Upload.css';
 const METERS_PER_MILE = 1609.344;
 const METERS_PER_KM = 1000;
 const METERS_PER_FOOT = 0.3048;
-
-const ACTIVITY_TYPES = ['run', 'bike', 'swim'];
 
 // Shared look for the pill inputs, same as the activity sidebar
 const INPUT_CLASS = 'form-control bg-transparent text-white border-white transition-ui hover-bg-stridex-lightgrey-hover focus-stridex';
@@ -64,7 +63,9 @@ function toDateTimeInput(date: Date): string {
 }
 
 function Upload() {
-  const [mode, setMode] = useState<Mode>('file');
+  // /upload?mode=manual opens straight to the manual form (the + button on the calendar)
+  const [searchParams] = useSearchParams();
+  const [mode, setMode] = useState<Mode>(searchParams.get('mode') === 'manual' ? 'manual' : 'file');
 
   const tabClass = (tab: Mode) =>
     'btn rounded-pill flex-fill d-inline-flex align-items-center justify-content-center border-0 transition-ui focus-stridex ' +
@@ -276,6 +277,7 @@ function FileUpload() {
 function ManualEntry() {
   const [title, setTitle] = useState('');
   const [type, setType] = useState('run');
+  const [workoutType, setWorkoutType] = useState<string | null>(null);
   const [startTime, setStartTime] = useState(() => toDateTimeInput(new Date()));
 
   const [distance, setDistance] = useState<number | null>(null);
@@ -305,6 +307,7 @@ function ManualEntry() {
   function clear() {
     setTitle('');
     setType('run');
+    setWorkoutType(null);
     setStartTime(toDateTimeInput(new Date()));
     setDistance(null);
     setDistanceUnit('mi');
@@ -332,6 +335,7 @@ function ManualEntry() {
 
     const activity: ActivityData = {
       type: type,
+      workoutType: workoutType,
       title: title.trim(),
       startTime: new Date(startTime),
       distance: distance == null ? null : Math.round(distance * metersPerUnit),
@@ -363,7 +367,7 @@ function ManualEntry() {
       {status !== '' && <SavedAlert message={status} />}
 
       <div className="row">
-        <div className="col-12 col-md-6 p-2">
+        <div className="col-12 p-2">
           <label htmlFor="manual-title" className="form-label">
             Activity Title<span className="text-danger">*</span>
           </label>
@@ -377,8 +381,8 @@ function ManualEntry() {
           />
         </div>
 
-        <div className="col-6 col-md-3 p-2">
-          <label htmlFor="manual-type" className="form-label">Activity Type</label>
+        <div className="col-6 col-md-4 p-2">
+          <label htmlFor="manual-type" className="form-label">Activity</label>
           <select
             id="manual-type"
             value={type}
@@ -393,7 +397,22 @@ function ManualEntry() {
           </select>
         </div>
 
-        <div className="col-6 col-md-3 p-2">
+        <div className="col-6 col-md-4 p-2">
+          <label htmlFor="manual-workout-type" className="form-label">Activity Type</label>
+          <select
+            id="manual-workout-type"
+            value={workoutType ?? 'Default'}
+            onChange={(e) => setWorkoutType(e.target.value === 'Default' ? null : e.target.value)}
+            className={SELECT_CLASS + ' rounded-pill'}
+          >
+            <option value="Default">Default</option>
+            {WORKOUT_TYPES.map((option) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="col-12 col-md-4 p-2">
           <label htmlFor="manual-date" className="form-label">
             Date<span className="text-danger">*</span>
           </label>

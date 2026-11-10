@@ -2,18 +2,16 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 import { db } from '../firebase';
 import type { ActivityUpload } from './activityMapper';
-
-// No login yet, so everything goes to the seeded demo user
-export const USER_ID = 'demo-user';
+import { getCurrentUserId } from './currentUser';
 
 /**
- * Saves one activity to Firestore, then saves its laps in the activity's "laps" subcollection.
+ * Saves one activity for the current user, then saves its laps in the activity's "laps" subcollection.
  * @returns The new activity's document id.
  */
 export async function uploadActivity(upload: ActivityUpload): Promise<string> {
   const activityRef = await addDoc(collection(db, 'activities'), {
     ...upload.activity,
-    userId: USER_ID,
+    userId: getCurrentUserId(),
     notes: upload.notes ?? '',
     createdAt: serverTimestamp(),
   });

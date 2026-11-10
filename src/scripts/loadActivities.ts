@@ -2,7 +2,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 
 import { db } from '../firebase';
 import type { ActivityData } from './activityMapper';
-import { USER_ID } from './uploadActivity';
+import { getCurrentUserId } from './currentUser';
 
 export interface Activity extends ActivityData {
   id: string;
@@ -15,7 +15,7 @@ export interface Activity extends ActivityData {
  * @returns The user's activities, oldest first.
  */
 export async function loadActivities(): Promise<Activity[]> {
-  const activitiesQuery = query(collection(db, 'activities'), where('userId', '==', USER_ID));
+  const activitiesQuery = query(collection(db, 'activities'), where('userId', '==', getCurrentUserId()));
   const snapshot = await getDocs(activitiesQuery);
 
   const activities: Activity[] = [];
@@ -31,6 +31,7 @@ export async function loadActivities(): Promise<Activity[]> {
     activities.push({
       id: doc.id,
       type: data.type,
+      workoutType: data.workoutType ?? null,
       title: data.title,
       startTime: startTime,
       distance: data.distance,

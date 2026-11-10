@@ -8,7 +8,10 @@ import { createEmptyLap, type Lap } from '../../types/lap';
 import { formatDuration, fromSeconds } from '../../scripts/time';
 import { clampNumberInput } from '../../scripts/input';
 import type { Activity } from '../../scripts/loadActivities';
+import type { ActivityData, LapData } from '../../scripts/activityMapper';
 import { updateActivity, type ActivityChanges } from '../../scripts/updateActivity';
+import { uploadActivity } from '../../scripts/uploadActivity';
+import { ACTIVITY_TYPES, WORKOUT_TYPES } from '../../scripts/activityTypes';
 import './ActivitySidebar.css';
 
 // Firestore stores meters, the form shows miles/km and feet
@@ -16,12 +19,30 @@ const METERS_PER_MILE = 1609.344;
 const METERS_PER_KM = 1000;
 const METERS_PER_FOOT = 0.3048;
 
-const ACTIVITY_TYPES = ['run', 'bike', 'swim'];
-
 interface ActivitySidebarProps {
+  /** The activity being edited, or null to fill in a new one. */
   activity?: Activity | null;
+  /** Day a new activity is saved on (the day selected in the calendar). */
+  date?: Date;
   onSave?: (updated: Activity) => void;
+  onCreate?: (created: Activity) => void;
   onCancel?: () => void;
+}
+
+/**
+ * Converts the laps in the form into the shape stored in Firestore (meters, seconds).
+ */
+function lapsToLapData(laps: Lap[]): LapData[] {
+  return laps.map((lap) => {
+    const metersPerUnit = lap.distanceUnit === 'km' ? METERS_PER_KM : METERS_PER_MILE;
+    return {
+      type: lap.type,
+      distance: lap.distance == null ? null : Math.round(lap.distance * metersPerUnit),
+      duration: lap.duration,
+      hrAvg: lap.avgHR,
+      hrMax: lap.maxHR,
+    };
+  });
 }
 
 /**
@@ -47,7 +68,8 @@ function formFromActivity(activity: Activity | null | undefined) {
 
   return {
     title: activity?.title ?? null,
-    type: activity?.type ?? 'Default',
+    type: activity?.type ?? 'run',
+    workoutType: activity?.workoutType ?? null,
     distance: distance,
     distanceUnit: 'mi',
     hours: time?.hours ?? null,
@@ -63,12 +85,13 @@ function formFromActivity(activity: Activity | null | undefined) {
   };
 }
 
-function ActivitySidebar({ activity, onSave, onCancel }: ActivitySidebarProps) {
+function ActivitySidebar({ activity, date, onSave, onCreate, onCancel }: ActivitySidebarProps) {
   // Values the form started with, used to only save fields that were changed
   const [initial, setInitial] = useState(() => formFromActivity(activity));
 
   const [title, setTitle] = useState<string | null>(initial.title);
   const [type, setType] = useState<string>(initial.type);
+  const [workoutType, setWorkoutType] = useState<string | null>(initial.workoutType);
 
   const [distance, setDistance] = useState<number | null>(initial.distance);
   const [distanceUnit, setDistanceUnit] = useState<string>(initial.distanceUnit);
@@ -101,9 +124,10 @@ function ActivitySidebar({ activity, onSave, onCancel }: ActivitySidebarProps) {
 
   const [saving, setSaving] = useState<boolean>(false);
   const [saveError, setSaveError] = useState<string>('');
+  const [saveStatus, setSaveStatus] = useState<string>('');
 
   const form = {
-    title, type, distance, distanceUnit, hours, minutes, seconds,
+    title, type, workoutType, distance, distanceUnit, hours, minutes, seconds,
     avgHR, maxHR, notes, elevation, calories, cadence, power,
   };
 
@@ -116,6 +140,7 @@ function ActivitySidebar({ activity, onSave, onCancel }: ActivitySidebarProps) {
 
     if (title !== initial.title) changes.title = title ?? '';
     if (type !== initial.type) changes.type = type;
+    if (workoutType !== initial.workoutType) changes.workoutType = workoutType;
 
     if (distance !== initial.distance || distanceUnit !== initial.distanceUnit) {
       const metersPerUnit = distanceUnit === 'km' ? METERS_PER_KM : METERS_PER_MILE;
@@ -162,10 +187,61 @@ function ActivitySidebar({ activity, onSave, onCancel }: ActivitySidebarProps) {
     }
   };
 
+  // Same rule as the Upload page: needs a title and a distance or a duration
+  const canCreate = (title ?? '').trim() !== '' && (totalSeconds > 0 || (distance ?? 0) > 0);
+
+  /**
+   * Saves the form as a new activity on the day selected in the calendar.
+   */
+  const createActivityHandler = async () => {
+    if (!canCreate) return;
+
+    // Noon on the selected day, so time zones can't push it onto a different day
+    const day = date ?? new Date();
+    const startTime = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 12);
+
+    const metersPerUnit = distanceUnit === 'km' ? METERS_PER_KM : METERS_PER_MILE;
+    const durationEmpty = hours == null && minutes == null && seconds == null;
+
+    const data: ActivityData = {
+      type: type,
+      workoutType: workoutType,
+      title: (title ?? '').trim(),
+      startTime: startTime,
+      distance: distance == null ? null : Math.round(distance * metersPerUnit),
+      duration: durationEmpty ? null : totalSeconds,
+      hrAvg: avgHR,
+      hrMax: maxHR,
+      elevation: elevation == null ? null : Math.round(elevation * METERS_PER_FOOT),
+      calories: calories,
+      cadence: cadence,
+      power: power,
+    };
+    const trimmedNotes = (notes ?? '').trim();
+
+    setSaving(true);
+    setSaveError('');
+    setSaveStatus('');
+    try {
+      const id = await uploadActivity({ activity: data, laps: lapsToLapData(laps), notes: trimmedNotes });
+      clearForm();
+      setSaveStatus('Saved "' + data.title + '"');
+      onCreate?.({ ...data, id: id, notes: trimmedNotes });
+    } catch (error) {
+      console.error('Error creating activity:', error);
+      setSaveError('Could not save activity');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Show the stored type even if it isn't one of the usual options
-  const typeOptions = ACTIVITY_TYPES.includes(type) || type === 'Default'
+  const typeOptions = ACTIVITY_TYPES.includes(type)
     ? ACTIVITY_TYPES
     : [...ACTIVITY_TYPES, type];
+  const workoutOptions = workoutType == null || WORKOUT_TYPES.includes(workoutType)
+    ? WORKOUT_TYPES
+    : [...WORKOUT_TYPES, workoutType];
 
   /**
    * Update a value in the lap form state.
@@ -213,7 +289,10 @@ function ActivitySidebar({ activity, onSave, onCancel }: ActivitySidebarProps) {
    */
   const clearForm = () => {
     setTitle(null);
-    setType('Default');
+    setType('run');
+    setWorkoutType(null);
+    setSaveError('');
+    setSaveStatus('');
     setDistance(null);
     setDistanceUnit('mi');
     setHours(null);
@@ -243,7 +322,7 @@ function ActivitySidebar({ activity, onSave, onCancel }: ActivitySidebarProps) {
   return (
     <>
       <div className="row">
-        <div className="col-6 p-2">
+        <div className="col-12 p-2">
           {/* Activity Title */}
           <label htmlFor="activity-title" className="form-label text-white">
             Activity Title
@@ -257,22 +336,40 @@ function ActivitySidebar({ activity, onSave, onCancel }: ActivitySidebarProps) {
             className="form-control rounded-pill bg-transparent text-white border-white transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
           />
         </div>
+      </div>
 
+      <div className="row">
         <div className="col-6 p-2">
           {/* Activity Type */}
-          <label htmlFor="activity-select" className="form-label text-white">Activity Type</label> 
+          <label htmlFor="activity-select" className="form-label text-white">Activity</label>
           <select
             id="activity-select"
             value={type}
             onChange={(e) => setType(e.target.value)}
             className="form-select rounded-pill bg-transparent text-white border-white transition-ui hover-bg-stridex-lightgrey-hover focus-stridex activity-input"
-            aria-label="Activity Type"
+            aria-label="Activity"
           >
-            <option value="Default">Default</option>
             {typeOptions.map((option) => (
               <option key={option} value={option}>
                 {option.charAt(0).toUpperCase() + option.slice(1)}
               </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="col-6 p-2">
+          {/* Workout Type (Easy, Tempo, ...), "Default" means none */}
+          <label htmlFor="activity-type-select" className="form-label text-white">Activity Type</label>
+          <select
+            id="activity-type-select"
+            value={workoutType ?? 'Default'}
+            onChange={(e) => setWorkoutType(e.target.value === 'Default' ? null : e.target.value)}
+            className="form-select rounded-pill bg-transparent text-white border-white transition-ui hover-bg-stridex-lightgrey-hover focus-stridex activity-input"
+            aria-label="Activity Type"
+          >
+            <option value="Default">Default</option>
+            {workoutOptions.map((option) => (
+              <option key={option} value={option}>{option}</option>
             ))}
           </select>
         </div>
@@ -474,7 +571,6 @@ function ActivitySidebar({ activity, onSave, onCancel }: ActivitySidebarProps) {
             value={notes ?? ''}
             onChange={(e) => setNotes(e.target.value)}
             rows={1}
-            maxLength={10}
             className="form-control rounded-4 bg-transparent text-white border-white transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
           />
         </div>
@@ -527,7 +623,7 @@ function ActivitySidebar({ activity, onSave, onCancel }: ActivitySidebarProps) {
               className="form-control rounded-end-0 rounded-pill bg-transparent text-white border-white transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
               aria-describedby="cadence-unit"
             />
-            <span id="cadence-unit" className="input-group-text rounded-start-0 rounded-pill bg-transparent text-white border-white">ft</span>
+            <span id="cadence-unit" className="input-group-text rounded-start-0 rounded-pill bg-transparent text-white border-white">spm</span>
           </div>
         </div>
 
@@ -543,7 +639,7 @@ function ActivitySidebar({ activity, onSave, onCancel }: ActivitySidebarProps) {
               className="form-control rounded-end-0 rounded-pill bg-transparent text-white border-white transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
               aria-describedby="power-unit"
             />
-            <span id="power-unit" className="input-group-text rounded-start-0 rounded-pill bg-transparent text-white border-white">K</span>
+            <span id="power-unit" className="input-group-text rounded-start-0 rounded-pill bg-transparent text-white border-white">W</span>
           </div>
         </div>
       </div>
@@ -577,10 +673,20 @@ function ActivitySidebar({ activity, onSave, onCancel }: ActivitySidebarProps) {
         </div>
       ) : (
       <div className="row border-top border-stridex-lightgrey mt-2 pt-2">
+        {(saveError !== '' || saveStatus !== '') && (
+          <div className="col-12 p-2 pb-0">
+            {saveError !== '' && <div className="alert alert-danger py-2 mb-0">{saveError}</div>}
+            {saveStatus !== '' && <div className="alert alert-success py-2 mb-0">{saveStatus}</div>}
+          </div>
+        )}
+        <p className="col-12 px-2 mb-0 text-stridex-lightgrey small">
+          New activity on {(date ?? new Date()).toLocaleDateString()}
+        </p>
         <div className="col-6 p-2">
           {/* Clear Button */}
           <button
             onClick={clearForm}
+            disabled={saving}
             className="btn btn-outline-light rounded-pill d-inline-flex align-items-center justify-content-center text-white w-100 p-2 px-4 my-1 transition-ui hover-bg-stridex-lightgrey-hover focus-danger"
           >
             <Eraser size={16} className="me-2" />
@@ -591,11 +697,12 @@ function ActivitySidebar({ activity, onSave, onCancel }: ActivitySidebarProps) {
         <div className="col-6 p-2">
           {/* Submit Button */}
           <button
-            type="submit"
+            onClick={createActivityHandler}
+            disabled={!canCreate || saving}
             className="btn btn-outline-light rounded-pill d-inline-flex align-items-center justify-content-center text-white w-100 p-2 px-4 my-1 transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
           >
             <Floppy size={16} className="me-2" />
-            Save
+            {saving ? 'Saving...' : 'Save'}
           </button>
         </div>
       </div>
