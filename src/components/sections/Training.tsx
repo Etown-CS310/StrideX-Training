@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import Calendar from 'react-calendar';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, PlusLg, Upload } from 'react-bootstrap-icons'
+import { ChevronLeft, ChevronRight, ListUl, PencilSquare, PlusLg, Upload } from 'react-bootstrap-icons'
 import type { Value } from 'react-calendar/dist/shared/types.js';
 
 import ActivitySidebar from '../ui/ActivitySidebar';
@@ -17,6 +17,23 @@ function Training() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState('');
+
+  // Sidebar shows either the activity list or the new/edit form
+  const [sidebarTab, setSidebarTab] = useState<'list' | 'form'>('list');
+
+  function selectActivity(id: string) {
+    setSelectedId(id);
+    setSidebarTab('form');
+  }
+
+  function closeActivity() {
+    setSelectedId(null);
+    setSidebarTab('list');
+  }
+
+  const tabClass = (tab: 'list' | 'form') =>
+    'btn btn-sm rounded-pill flex-fill d-inline-flex align-items-center justify-content-center border-0 transition-ui focus-stridex ' +
+    (sidebarTab === tab ? 'bg-stridex-green text-stridex-black' : 'text-white hover-bg-stridex-grey-hover');
 
   useEffect(() => {
     loadActivities()
@@ -173,7 +190,7 @@ function Training() {
                         className={'badge rounded-pill fw-normal text-truncate w-100 mw-100 p-05 p-md-1 ' +
                           (activity.id === selectedId ? 'bg-stridex-green text-stridex-black' : 'bg-stridex-grey')}
                         title={activity.title}
-                        onClick={() => setSelectedId(activity.id)}
+                        onClick={() => selectActivity(activity.id)}
                       >
                         {activity.title}
                       </span>
@@ -195,17 +212,34 @@ function Training() {
           </main>
 
           <aside id="sideBar" className="col-12 col-lg-4 col-xxl-3 ps-lg-3 ps-xxl-4">
-            {/* key makes the form reload its fields when a different activity is selected */}
-            <ActivitySidebar
-              key={selectedId ?? 'none'}
-              activity={selectedActivity}
-              date={selectedDate}
-              onSave={saveActivity}
-              onCreate={createActivity}
-              onCancel={() => setSelectedId(null)}
-            />
+            {/* List / Form toggle */}
+            <div className="d-flex bg-stridex-black border border-stridex-lightgrey rounded-pill p-1 mb-2" role="tablist">
+              <button role="tab" aria-selected={sidebarTab === 'list'} onClick={() => setSidebarTab('list')} className={tabClass('list')}>
+                <ListUl size={16} className="me-2" />
+                Activities
+              </button>
+              <button role="tab" aria-selected={sidebarTab === 'form'} onClick={() => setSidebarTab('form')} className={tabClass('form')}>
+                {selectedId != null ? <PencilSquare size={16} className="me-2" /> : <PlusLg size={16} className="me-2" />}
+                {selectedId != null ? 'Edit Activity' : 'New Activity'}
+              </button>
+            </div>
 
-            <ViewSidebar />
+            {/* Both stay mounted so switching tabs doesn't lose what was typed */}
+            <div className={sidebarTab === 'list' ? '' : 'd-none'} role="tabpanel">
+              <ViewSidebar activities={activities} selectedId={selectedId} onSelect={selectActivity} />
+            </div>
+
+            <div className={sidebarTab === 'form' ? '' : 'd-none'} role="tabpanel">
+              {/* key makes the form reload its fields when a different activity is selected */}
+              <ActivitySidebar
+                key={selectedId ?? 'none'}
+                activity={selectedActivity}
+                date={selectedDate}
+                onSave={saveActivity}
+                onCreate={createActivity}
+                onCancel={closeActivity}
+              />
+            </div>
           </aside>
         </div>
       </div>

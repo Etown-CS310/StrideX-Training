@@ -1,79 +1,80 @@
+import { useState } from 'react';
 
 import ActivityCard from "../ui/ActivityCard";
+import type { Activity } from '../../scripts/loadActivities';
+import { ACTIVITY_TYPES } from '../../scripts/activityTypes';
 
+const METERS_PER_MILE = 1609.344;
 
-function ViewSidebar() {
+interface ViewSidebarProps {
+    activities: Activity[];
+    selectedId?: string | null;
+    onSelect?: (id: string) => void;
+}
 
-    const activity1 = {
-        title: "Morning Run",
-        distance: 2.00, // Miles many need to change
-        disttype: "mi",
-        time: 7200,
-        activity: "Running"
-    };
-    const activity2 = {
-        title: "Midday Swim",
-        distance: 1,
-        disttype: "km",
-        time: 3600,
-        activity: "Swimming"
-    };
+/**
+ * Searchable list of the user's activities, newest first. Clicking one opens it for editing.
+ */
+function ViewSidebar({ activities, selectedId, onSelect }: ViewSidebarProps) {
+    const [search, setSearch] = useState('');
+    const [sport, setSport] = useState('Default');
 
-    const activities = [activity1, activity2];
+    const searchText = search.trim().toLowerCase();
+    const shown = activities
+        .filter((activity) => sport === 'Default' || activity.type === sport)
+        .filter((activity) => searchText === '' || (activity.title ?? '').toLowerCase().includes(searchText))
+        .sort((a, b) => (b.startTime?.getTime() ?? 0) - (a.startTime?.getTime() ?? 0));
 
-
-    // Pull data from database
-
-
-
-
-
-
-
-    // Print data onto screen
     return (
         <div>
             <div className="row p-1 pb-3">
                 <div className="col-6 p-2">
                     <input
                         id="activity-search"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
                         className="w-100 form-control rounded-pill bg-transparent text-white border-white transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
                         placeholder="Search Activity"
-                    >
-                    
-                    </input>
+                        aria-label="Search Activity"
+                    />
                 </div>
 
                 <div className="col-6 p-2">
-                    <select 
+                    <select
                         id="activity"
+                        value={sport}
+                        onChange={(e) => setSport(e.target.value)}
                         className="form-select col-6 rounded-pill bg-transparent text-white border-white transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
                         aria-label="Activity Type"
                     >
-                        <option value="Default">Default</option>
-                        <option value="Swim">Swim</option>
-
-                        
+                        <option value="Default">All</option>
+                        {ACTIVITY_TYPES.map((option) => (
+                            <option key={option} value={option}>
+                                {option.charAt(0).toUpperCase() + option.slice(1)}
+                            </option>
+                        ))}
                     </select>
                 </div>
             </div>
 
-            {activities.map((activity) => (
+            {shown.length === 0 && (
+                <p className="text-stridex-lightgrey text-center">No activities found</p>
+            )}
+
+            {shown.map((activity) => (
                 <ActivityCard
-                    title = {activity.title}
-                    distance = {activity.distance}
-                    disttype = {activity.disttype}
-                    time = {activity.time}
-                    activity = {activity.activity}
+                    key={activity.id}
+                    title={activity.title}
+                    distance={(activity.distance ?? 0) / METERS_PER_MILE}
+                    disttype="mi"
+                    time={activity.duration ?? 0}
+                    activity={activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}
+                    selected={activity.id === selectedId}
+                    onClick={onSelect ? () => onSelect(activity.id) : undefined}
                 />
             ))}
-
-
-           
         </div>
     )
-
-
 }
 
 export default ViewSidebar;
