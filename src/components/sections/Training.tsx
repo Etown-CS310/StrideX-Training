@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import Calendar from 'react-calendar';
+import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, PlusLg, Upload } from 'react-bootstrap-icons'
 import type { Value } from 'react-calendar/dist/shared/types.js';
 
 import ActivitySidebar from '../ui/ActivitySidebar';
-import { parseFitFile } from '../../scripts/fitParser';
+import ViewSidebar from '../ui/ViewSidebar';
 import { dateKey, loadActivities, type Activity } from '../../scripts/loadActivities';
 
 import './Training.css';
@@ -44,6 +45,15 @@ function Training() {
     setActivities((prev) => prev.map((activity) => (activity.id === updated.id ? updated : activity)));
   }
 
+  // Add a newly created activity to the calendar and select it
+  function createActivity(created: Activity) {
+    setActivities((prev) => [...prev, created]);
+    setSelectedId(created.id);
+  }
+
+  // Day clicked on the calendar, used as the date for activities made in the sidebar
+  const selectedDate = value instanceof Date ? value : new Date();
+
   function goToPrevMonth() {
     setActiveStartDate((prev) => {
       const base = prev ?? new Date();
@@ -80,26 +90,6 @@ function Training() {
   }
 
   const rowCount = getWeekRowCount(activeStartDate ?? new Date());
-
-  function manualUpload() {
-    return;
-  }
-
-  /**
-   * Handles the file input change event, reads the selected .fit file, and parses it using the parseFitFile function.
-   * @param event - The change event from the file input element.
-   */
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      try {
-        const messages = await parseFitFile(file);
-        console.log('Parsed FIT messages:', messages);
-      } catch (error) {
-        console.error('Error parsing FIT file:', error);
-      }
-    }
-  };
 
   return (
     <div className="training bg-stridex-grey flex-grow-1">
@@ -144,25 +134,24 @@ function Training() {
               
               <div className="upload-container d-flex align-items-center gap-2">
                 {/* Manual Upload */}
-                <button
-                  onClick={manualUpload}
+                <Link
+                  to="/upload?mode=manual"
                   className="upload-circle btn btn-outline-light text-white rounded-circle d-inline-flex align-items-center justify-content-center p-2 transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
                   aria-label="Manual Upload"
+                  title="Enter an activity"
                 >
                   <PlusLg size={20} />
-                </button>
+                </Link>
 
                 {/* File Upload */}
-                <label className="upload-circle btn btn-outline-light text-white rounded-circle d-inline-flex align-items-center justify-content-center p-2 transition-ui hover-bg-stridex-lightgrey-hover focus-stridex">
+                <Link
+                  to="/upload"
+                  className="upload-circle btn btn-outline-light text-white rounded-circle d-inline-flex align-items-center justify-content-center p-2 transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
+                  aria-label="File Upload"
+                  title="Upload a .fit or .csv file"
+                >
                   <Upload size={20} />
-                  <input
-                    type="file"
-                    accept=".fit, .csv"
-                    onChange={handleFileChange}
-                    className="visually-hidden"
-                    aria-label="Activity File Upload"
-                  />
-                </label>
+                </Link>
               </div>
             </div>
             {loadError !== '' && (
@@ -210,9 +199,13 @@ function Training() {
             <ActivitySidebar
               key={selectedId ?? 'none'}
               activity={selectedActivity}
+              date={selectedDate}
               onSave={saveActivity}
+              onCreate={createActivity}
               onCancel={() => setSelectedId(null)}
             />
+
+            <ViewSidebar />
           </aside>
         </div>
       </div>
