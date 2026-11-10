@@ -1,0 +1,45 @@
+/* Drag-and-drop file area */
+.dropzone {
+  min-height: 180px;
+  border: 2px dashed var(--bs-stridex-lightgrey);
+  cursor: pointer;
+}
+
+.dropzone:hover,
+.dropzone:focus-within,
+.dropzone-active {
+  border-color: var(--bs-stridex-green);
+  background-color: rgba(var(--bs-stridex-green-rgb), 0.08);
+}
+
+/* Parsed activities preview */
+.preview-scroll {
+  max-height: 50vh;
+}
+
+.preview-table {
+  --bs-table-bg: transparent;
+  --bs-table-color: #fff;
+  white-space: nowrap;
+}
+
+.preview-table thead th {
+  position: sticky;
+  top: 0;
+  background-color: var(--bs-stridex-black);
+  color: var(--bs-stridex-lightgrey);
+  font-weight: 400;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+/* Hours / minutes / seconds side by side */
+.duration-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+/* Make the date picker icon visible on the dark background */
+.upload input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}

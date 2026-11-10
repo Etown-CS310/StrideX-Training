@@ -26,6 +26,7 @@ export interface ActivityData {
 export interface ActivityUpload {
   activity: ActivityData;
   laps: LapData[];
+  notes?: string;
 }
 
 /**

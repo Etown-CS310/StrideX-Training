@@ -14,7 +14,7 @@ export async function uploadActivity(upload: ActivityUpload): Promise<string> {
   const activityRef = await addDoc(collection(db, 'activities'), {
     ...upload.activity,
     userId: USER_ID,
-    notes: '',
+    notes: upload.notes ?? '',
     createdAt: serverTimestamp(),
   });
 
