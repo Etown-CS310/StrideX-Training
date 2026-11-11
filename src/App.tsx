@@ -4,7 +4,7 @@ import Header from './components/sections/Header';
 import Home from './components/sections/Home';
 import Training from './components/sections/Training';
 import Groups from './components/sections/Groups';
-import ParseTest from './components/sections/ParseTest';
+import Upload from './components/sections/Upload';
 import Auth from './components/sections/Auth';
 
 function App() {
@@ -15,7 +15,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/training" element={<Training />} />
         <Route path="/groups" element={<Groups />} />
-        <Route path="/parse-test" element={<ParseTest />} />
+        <Route path="/upload" element={<Upload />} />
         <Route path="/login" element={<Auth mode="login" />} />
         <Route path="/register" element={<Auth mode="register" />} />
       </Routes>

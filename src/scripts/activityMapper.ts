@@ -11,6 +11,7 @@ export interface LapData {
 
 export interface ActivityData {
   type: string;
+  workoutType: string | null; // Easy, Tempo, Long, ... (picked by the user, files don't have it)
   title: string;
   startTime: Date | null;
   distance: number | null;
@@ -26,6 +27,7 @@ export interface ActivityData {
 export interface ActivityUpload {
   activity: ActivityData;
   laps: LapData[];
+  notes?: string;
 }
 
 /**
@@ -169,6 +171,7 @@ export function fromSingleCsv(rows: string[][], fileName: string): ActivityUploa
 
   const activity: ActivityData = {
     type: 'run',
+    workoutType: null,
     title: titleFromFileName(fileName),
     startTime: null,
     distance: milesToMeters(toNumber(getColumn(header, summary, 'Distance'))),
@@ -203,6 +206,7 @@ export function fromMultiCsv(rows: string[][]): ActivityUpload[] {
 
     const activity: ActivityData = {
       type: mapSportType(getColumn(header, row, 'Activity Type')),
+      workoutType: null,
       title: getColumn(header, row, 'Title'),
       startTime: startTime,
       distance: milesToMeters(toNumber(getColumn(header, row, 'Distance'))),
@@ -254,6 +258,7 @@ export function fromFit(messages: any, fileName: string): ActivityUpload {
 
   const activity: ActivityData = {
     type: type,
+    workoutType: null,
     title: titleFromFileName(fileName),
     startTime: startTime,
     distance: distance,

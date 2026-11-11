@@ -5,19 +5,99 @@ import LapRow from '../ui/LapRow';
 import LapDisplayRow from './LapDisplayRow';
 
 import { createEmptyLap, type Lap } from '../../types/lap';
-import { formatDuration } from '../../scripts/time';
+import { formatDuration, fromSeconds } from '../../scripts/time';
 import { clampNumberInput } from '../../scripts/input';
+import type { Activity } from '../../scripts/loadActivities';
+import type { ActivityData, LapData } from '../../scripts/activityMapper';
+import { updateActivity, type ActivityChanges } from '../../scripts/updateActivity';
+import { uploadActivity } from '../../scripts/uploadActivity';
+import { ACTIVITY_TYPES, WORKOUT_TYPES } from '../../scripts/activityTypes';
 import './ActivitySidebar.css';
 
-function ActivitySidebar() {
-  const [title, setTitle] = useState<string | null>(null);
-  const [type, setType] = useState<string>('Default');
+// Firestore stores meters, the form shows miles/km and feet
+const METERS_PER_MILE = 1609.344;
+const METERS_PER_KM = 1000;
+const METERS_PER_FOOT = 0.3048;
 
-  const [distance, setDistance] = useState<number | null>(null);
-  const [distanceUnit, setDistanceUnit] = useState<string>('mi');
-  const [hours, setHours] = useState<number | null>(null);
-  const [minutes, setMinutes] = useState<number | null>(null);
-  const [seconds, setSeconds] = useState<number | null>(null);
+interface ActivitySidebarProps {
+  /** The activity being edited, or null to fill in a new one. */
+  activity?: Activity | null;
+  /** Day a new activity is saved on (the day selected in the calendar). */
+  date?: Date;
+  onSave?: (updated: Activity) => void;
+  onCreate?: (created: Activity) => void;
+  onCancel?: () => void;
+}
+
+/**
+ * Converts the laps in the form into the shape stored in Firestore (meters, seconds).
+ */
+function lapsToLapData(laps: Lap[]): LapData[] {
+  return laps.map((lap) => {
+    const metersPerUnit = lap.distanceUnit === 'km' ? METERS_PER_KM : METERS_PER_MILE;
+    return {
+      type: lap.type,
+      distance: lap.distance == null ? null : Math.round(lap.distance * metersPerUnit),
+      duration: lap.duration,
+      hrAvg: lap.avgHR,
+      hrMax: lap.maxHR,
+    };
+  });
+}
+
+/**
+ * Converts a stored activity into the values shown in the form.
+ * @param activity - The activity to show, or null for an empty form.
+ * @returns The form values.
+ */
+function formFromActivity(activity: Activity | null | undefined) {
+  let time: ReturnType<typeof fromSeconds> | null = null;
+  if (activity?.duration != null) {
+    time = fromSeconds(Math.round(activity.duration));
+  }
+
+  let distance: number | null = null;
+  if (activity?.distance != null) {
+    distance = Math.round((activity.distance / METERS_PER_MILE) * 100) / 100;
+  }
+
+  let elevation: number | null = null;
+  if (activity?.elevation != null) {
+    elevation = Math.round(activity.elevation / METERS_PER_FOOT);
+  }
+
+  return {
+    title: activity?.title ?? null,
+    type: activity?.type ?? 'run',
+    workoutType: activity?.workoutType ?? null,
+    distance: distance,
+    distanceUnit: 'mi',
+    hours: time?.hours ?? null,
+    minutes: time?.minutes ?? null,
+    seconds: time?.seconds ?? null,
+    avgHR: activity?.hrAvg ?? null,
+    maxHR: activity?.hrMax ?? null,
+    notes: activity?.notes ?? null,
+    elevation: elevation,
+    calories: activity?.calories ?? null,
+    cadence: activity?.cadence ?? null,
+    power: activity?.power ?? null,
+  };
+}
+
+function ActivitySidebar({ activity, date, onSave, onCreate, onCancel }: ActivitySidebarProps) {
+  // Values the form started with, used to only save fields that were changed
+  const [initial, setInitial] = useState(() => formFromActivity(activity));
+
+  const [title, setTitle] = useState<string | null>(initial.title);
+  const [type, setType] = useState<string>(initial.type);
+  const [workoutType, setWorkoutType] = useState<string | null>(initial.workoutType);
+
+  const [distance, setDistance] = useState<number | null>(initial.distance);
+  const [distanceUnit, setDistanceUnit] = useState<string>(initial.distanceUnit);
+  const [hours, setHours] = useState<number | null>(initial.hours);
+  const [minutes, setMinutes] = useState<number | null>(initial.minutes);
+  const [seconds, setSeconds] = useState<number | null>(initial.seconds);
 
   // Calculate total seconds and pace based on distance and duration
   const totalSeconds = (hours ?? 0) * 3600 + (minutes ?? 0) * 60 + (seconds ?? 0);
@@ -25,22 +105,143 @@ function ActivitySidebar() {
     totalSeconds / (distanceUnit === 'mi' ? distance : distance * 0.621371) :
     0;
 
-  const [avgHR, setAvgHR] = useState<number | null>(null);
-  const [maxHR, setMaxHR] = useState<number | null>(null);
+  const [avgHR, setAvgHR] = useState<number | null>(initial.avgHR);
+  const [maxHR, setMaxHR] = useState<number | null>(initial.maxHR);
 
   const [laps, setLaps] = useState<Lap[]>([]);
   const [lapForm, setLapForm] = useState<Lap>(createEmptyLap());
 
-  const [notes, setNotes] = useState<string | null>(null);
+  const [notes, setNotes] = useState<string | null>(initial.notes);
 
-  const [elevation, setElevation] = useState<number | null>(null);
-  const [calories, setCalories] = useState<number | null>(null);
+  const [elevation, setElevation] = useState<number | null>(initial.elevation);
+  const [calories, setCalories] = useState<number | null>(initial.calories);
 
-  const [cadence, setCadence] = useState<number | null>(null);
-  const [power, setPower] = useState<number | null>(null);
+  const [cadence, setCadence] = useState<number | null>(initial.cadence);
+  const [power, setPower] = useState<number | null>(initial.power);
 
   const [lapEditEnabled, setLapEditEnabled] = useState<boolean>(false);
-  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
+  const [, setRemovingIds] = useState<Set<string>>(new Set());
+
+  const [saving, setSaving] = useState<boolean>(false);
+  const [saveError, setSaveError] = useState<string>('');
+  const [saveStatus, setSaveStatus] = useState<string>('');
+
+  const form = {
+    title, type, workoutType, distance, distanceUnit, hours, minutes, seconds,
+    avgHR, maxHR, notes, elevation, calories, cadence, power,
+  };
+
+  /**
+   * Compares the form to its starting values and converts the changed fields back to Firestore units.
+   * @returns Only the fields that were changed.
+   */
+  const getChanges = (): ActivityChanges => {
+    const changes: ActivityChanges = {};
+
+    if (title !== initial.title) changes.title = title ?? '';
+    if (type !== initial.type) changes.type = type;
+    if (workoutType !== initial.workoutType) changes.workoutType = workoutType;
+
+    if (distance !== initial.distance || distanceUnit !== initial.distanceUnit) {
+      const metersPerUnit = distanceUnit === 'km' ? METERS_PER_KM : METERS_PER_MILE;
+      changes.distance = distance == null ? null : Math.round(distance * metersPerUnit);
+    }
+
+    if (hours !== initial.hours || minutes !== initial.minutes || seconds !== initial.seconds) {
+      const durationEmpty = hours == null && minutes == null && seconds == null;
+      changes.duration = durationEmpty ? null : totalSeconds;
+    }
+
+    if (avgHR !== initial.avgHR) changes.hrAvg = avgHR;
+    if (maxHR !== initial.maxHR) changes.hrMax = maxHR;
+    if (notes !== initial.notes) changes.notes = notes ?? '';
+
+    if (elevation !== initial.elevation) {
+      changes.elevation = elevation == null ? null : Math.round(elevation * METERS_PER_FOOT);
+    }
+
+    if (calories !== initial.calories) changes.calories = calories;
+    if (cadence !== initial.cadence) changes.cadence = cadence;
+    if (power !== initial.power) changes.power = power;
+
+    return changes;
+  };
+
+  const changes = getChanges();
+  const hasChanges = Object.keys(changes).length > 0;
+
+  const saveActivityHandler = async () => {
+    if (activity == null || !hasChanges) return;
+
+    setSaving(true);
+    setSaveError('');
+    try {
+      await updateActivity(activity.id, changes);
+      setInitial(form);
+      onSave?.({ ...activity, ...changes });
+    } catch (error) {
+      console.error('Error saving activity:', error);
+      setSaveError('Could not save changes');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Same rule as the Upload page: needs a title and a distance or a duration
+  const canCreate = (title ?? '').trim() !== '' && (totalSeconds > 0 || (distance ?? 0) > 0);
+
+  /**
+   * Saves the form as a new activity on the day selected in the calendar.
+   */
+  const createActivityHandler = async () => {
+    if (!canCreate) return;
+
+    // Noon on the selected day, so time zones can't push it onto a different day
+    const day = date ?? new Date();
+    const startTime = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 12);
+
+    const metersPerUnit = distanceUnit === 'km' ? METERS_PER_KM : METERS_PER_MILE;
+    const durationEmpty = hours == null && minutes == null && seconds == null;
+
+    const data: ActivityData = {
+      type: type,
+      workoutType: workoutType,
+      title: (title ?? '').trim(),
+      startTime: startTime,
+      distance: distance == null ? null : Math.round(distance * metersPerUnit),
+      duration: durationEmpty ? null : totalSeconds,
+      hrAvg: avgHR,
+      hrMax: maxHR,
+      elevation: elevation == null ? null : Math.round(elevation * METERS_PER_FOOT),
+      calories: calories,
+      cadence: cadence,
+      power: power,
+    };
+    const trimmedNotes = (notes ?? '').trim();
+
+    setSaving(true);
+    setSaveError('');
+    setSaveStatus('');
+    try {
+      const id = await uploadActivity({ activity: data, laps: lapsToLapData(laps), notes: trimmedNotes });
+      clearForm();
+      setSaveStatus('Saved "' + data.title + '"');
+      onCreate?.({ ...data, id: id, notes: trimmedNotes });
+    } catch (error) {
+      console.error('Error creating activity:', error);
+      setSaveError('Could not save activity');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Show the stored type even if it isn't one of the usual options
+  const typeOptions = ACTIVITY_TYPES.includes(type)
+    ? ACTIVITY_TYPES
+    : [...ACTIVITY_TYPES, type];
+  const workoutOptions = workoutType == null || WORKOUT_TYPES.includes(workoutType)
+    ? WORKOUT_TYPES
+    : [...WORKOUT_TYPES, workoutType];
 
   /**
    * Update a value in the lap form state.
@@ -88,7 +289,10 @@ function ActivitySidebar() {
    */
   const clearForm = () => {
     setTitle(null);
-    setType('Default');
+    setType('run');
+    setWorkoutType(null);
+    setSaveError('');
+    setSaveStatus('');
     setDistance(null);
     setDistanceUnit('mi');
     setHours(null);
@@ -143,33 +347,30 @@ function ActivitySidebar() {
             value={type}
             onChange={(e) => setType(e.target.value)}
             className="form-select rounded-pill bg-transparent text-white border-white transition-ui hover-bg-stridex-lightgrey-hover focus-stridex activity-input"
-            aria-label="Activity Type"
+            aria-label="Activity"
           >
-
-            <option value="Default">Default</option>
-            <option value="Running">Running</option>
+            {typeOptions.map((option) => (
+              <option key={option} value={option}>
+                {option.charAt(0).toUpperCase() + option.slice(1)}
+              </option>
+            ))}
           </select>
         </div>
 
-
         <div className="col-6 p-2">
-          {/* Activity Type */}
-          <label htmlFor="activity-type-select" className="form-label text-white">Activity Type</label> 
+          {/* Workout Type (Easy, Tempo, ...), "Default" means none */}
+          <label htmlFor="activity-type-select" className="form-label text-white">Activity Type</label>
           <select
-            id="activity-type-select" //activity-type-select
-            value={type}
-            onChange={(e) => setType(e.target.value)}
+            id="activity-type-select"
+            value={workoutType ?? 'Default'}
+            onChange={(e) => setWorkoutType(e.target.value === 'Default' ? null : e.target.value)}
             className="form-select rounded-pill bg-transparent text-white border-white transition-ui hover-bg-stridex-lightgrey-hover focus-stridex activity-input"
             aria-label="Activity Type"
           >
             <option value="Default">Default</option>
-            <option value="Double">Double</option>
-            <option value="Easy">Easy</option>
-            <option value="Hill">Hill</option>
-            <option value="Interval">Interval</option>
-            <option value="Long">Long</option>
-            <option value="Race">Race</option>
-            <option value="Tempo">Tempo</option>
+            {workoutOptions.map((option) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
           </select>
         </div>
       </div>
@@ -370,7 +571,6 @@ function ActivitySidebar() {
             value={notes ?? ''}
             onChange={(e) => setNotes(e.target.value)}
             rows={1}
-            maxLength={10}
             className="form-control rounded-4 bg-transparent text-white border-white transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
           />
         </div>
@@ -423,7 +623,7 @@ function ActivitySidebar() {
               className="form-control rounded-end-0 rounded-pill bg-transparent text-white border-white transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
               aria-describedby="cadence-unit"
             />
-            <span id="cadence-unit" className="input-group-text rounded-start-0 rounded-pill bg-transparent text-white border-white">ft</span>
+            <span id="cadence-unit" className="input-group-text rounded-start-0 rounded-pill bg-transparent text-white border-white">spm</span>
           </div>
         </div>
 
@@ -439,16 +639,54 @@ function ActivitySidebar() {
               className="form-control rounded-end-0 rounded-pill bg-transparent text-white border-white transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
               aria-describedby="power-unit"
             />
-            <span id="power-unit" className="input-group-text rounded-start-0 rounded-pill bg-transparent text-white border-white">K</span>
+            <span id="power-unit" className="input-group-text rounded-start-0 rounded-pill bg-transparent text-white border-white">W</span>
           </div>
         </div>
       </div>
 
+      {activity != null ? (
+        <div className="row">
+          <div className="col-12 p-2">
+            {saveError !== '' && (
+              <div className="alert alert-danger py-2">{saveError}</div>
+            )}
+            <div className="d-flex justify-content-end gap-2">
+              {/* Cancel (deselects the activity) */}
+              <button
+                onClick={onCancel}
+                disabled={saving}
+                className="btn btn-outline-light rounded-pill px-3 transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
+              >
+                Cancel
+              </button>
+
+              {/* Save (if something was changed) */}
+              <button
+                onClick={saveActivityHandler}
+                disabled={!hasChanges || saving}
+                className="btn bg-stridex-green text-stridex-black rounded-pill px-3 transition-ui hover-bg-stridex-darkgreen-hover focus-stridex"
+              >
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
       <div className="row border-top border-stridex-lightgrey mt-2 pt-2">
+        {(saveError !== '' || saveStatus !== '') && (
+          <div className="col-12 p-2 pb-0">
+            {saveError !== '' && <div className="alert alert-danger py-2 mb-0">{saveError}</div>}
+            {saveStatus !== '' && <div className="alert alert-success py-2 mb-0">{saveStatus}</div>}
+          </div>
+        )}
+        <p className="col-12 px-2 mb-0 text-stridex-lightgrey small">
+          New activity on {(date ?? new Date()).toLocaleDateString()}
+        </p>
         <div className="col-6 p-2">
           {/* Clear Button */}
           <button
             onClick={clearForm}
+            disabled={saving}
             className="btn btn-outline-light rounded-pill d-inline-flex align-items-center justify-content-center text-white w-100 p-2 px-4 my-1 transition-ui hover-bg-stridex-lightgrey-hover focus-danger"
           >
             <Eraser size={16} className="me-2" />
@@ -459,14 +697,16 @@ function ActivitySidebar() {
         <div className="col-6 p-2">
           {/* Submit Button */}
           <button
-            type="submit"
+            onClick={createActivityHandler}
+            disabled={!canCreate || saving}
             className="btn btn-outline-light rounded-pill d-inline-flex align-items-center justify-content-center text-white w-100 p-2 px-4 my-1 transition-ui hover-bg-stridex-lightgrey-hover focus-stridex"
           >
             <Floppy size={16} className="me-2" />
-            Save
+            {saving ? 'Saving...' : 'Save'}
           </button>
         </div>
       </div>
+      )}
     </>
   );
 }

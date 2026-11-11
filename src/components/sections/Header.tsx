@@ -16,6 +16,7 @@ function Header() {
             <NavLink to="/" end className="nav-link px-0">Home</NavLink>
             <NavLink to="/training" className="nav-link px-0">Training</NavLink>
             <NavLink to="/groups" className="nav-link px-0">Groups</NavLink>
+            <NavLink to="/upload" className="nav-link px-0">Upload</NavLink>
           </div>
 
           <div className="nav-auth d-flex align-items-center gap-4">
