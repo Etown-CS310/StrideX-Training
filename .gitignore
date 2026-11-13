@@ -25,3 +25,6 @@ dist-ssr
 
 # Firebase service account key (never commit please)
 serviceAccount.json
+
+# Server secrets (copy .env.example to .env)
+.env

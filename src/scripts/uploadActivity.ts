@@ -1,28 +1,15 @@
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-
-import { db } from '../firebase';
 import type { ActivityUpload } from './activityMapper';
-import { getCurrentUserId } from './currentUser';
+import { apiFetch } from './api';
 
 /**
- * Saves one activity for the current user, then saves its laps in the activity's "laps" subcollection.
- * @returns The new activity's document id.
+ * Saves one activity and its laps for the logged in user with POST /api/activities.
+ * @returns The new activity's id.
  */
 export async function uploadActivity(upload: ActivityUpload): Promise<string> {
-  const activityRef = await addDoc(collection(db, 'activities'), {
-    ...upload.activity,
-    userId: getCurrentUserId(),
+  const result = await apiFetch<{ activity: { id: string } }>('/activities', 'POST', {
+    activity: upload.activity,
+    laps: upload.laps,
     notes: upload.notes ?? '',
-    createdAt: serverTimestamp(),
   });
-
-  for (const lap of upload.laps) {
-    await addDoc(collection(db, 'activities', activityRef.id, 'laps'), {
-      ...lap,
-      activityId: activityRef.id,
-      notes: '',
-    });
-  }
-
-  return activityRef.id;
+  return result.activity.id;
 }

@@ -16,8 +16,8 @@ function App() {
         <Route path="/training" element={<Training />} />
         <Route path="/groups" element={<Groups />} />
         <Route path="/upload" element={<Upload />} />
-        <Route path="/login" element={<Auth mode="login" />} />
-        <Route path="/register" element={<Auth mode="register" />} />
+        <Route path="/login" element={<Auth key="login" mode="login" />} />
+        <Route path="/register" element={<Auth key="register" mode="register" />} />
       </Routes>
     </BrowserRouter>
   );

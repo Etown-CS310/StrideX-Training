@@ -7,6 +7,7 @@ import type { Value } from 'react-calendar/dist/shared/types.js';
 import ActivitySidebar from '../ui/ActivitySidebar';
 import ViewSidebar from '../ui/ViewSidebar';
 import { dateKey, loadActivities, type Activity } from '../../scripts/loadActivities';
+import { useCurrentUser } from '../../scripts/currentUser';
 
 import './Training.css';
 
@@ -17,6 +18,9 @@ function Training() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState('');
+  const user = useCurrentUser();
+  // Nothing to show once logged out
+  const visibleActivities = user == null ? [] : activities;
 
   // Sidebar shows either the activity list or the new/edit form
   const [sidebarTab, setSidebarTab] = useState<'list' | 'form'>('list');
@@ -35,17 +39,24 @@ function Training() {
     'btn btn-sm rounded-pill flex-fill d-inline-flex align-items-center justify-content-center border-0 transition-ui focus-stridex ' +
     (sidebarTab === tab ? 'bg-stridex-green text-stridex-black' : 'text-white hover-bg-stridex-grey-hover');
 
+  // Reload whenever someone logs in or out
   useEffect(() => {
+    if (user == null) {
+      return;
+    }
     loadActivities()
-      .then(setActivities)
+      .then((loaded) => {
+        setActivities(loaded);
+        setLoadError('');
+      })
       .catch((err) => {
         console.error('Error loading activities:', err);
-        setLoadError('Could not load activities');
+        setLoadError('Could not load activities: ' + (err instanceof Error ? err.message : 'unknown error'));
       });
-  }, []);
+  }, [user]);
 
   const activitiesByDay = new Map<string, Activity[]>();
-  for (const activity of activities) {
+  for (const activity of visibleActivities) {
     if (activity.startTime == null) {
       continue;
     }
@@ -55,7 +66,7 @@ function Training() {
     activitiesByDay.set(key, dayActivities);
   }
 
-  const selectedActivity = activities.find((activity) => activity.id === selectedId) ?? null;
+  const selectedActivity = visibleActivities.find((activity) => activity.id === selectedId) ?? null;
 
   // Swap in the saved version so the calendar updates without reloading
   function saveActivity(updated: Activity) {
@@ -171,6 +182,11 @@ function Training() {
                 </Link>
               </div>
             </div>
+            {user == null && (
+              <div className="alert alert-secondary py-2">
+                <Link to="/login">Log in</Link> or <Link to="/register">sign up</Link> to see and save your training.
+              </div>
+            )}
             {loadError !== '' && (
               <div className="alert alert-danger py-2">{loadError}</div>
             )}
@@ -226,7 +242,7 @@ function Training() {
 
             {/* Both stay mounted so switching tabs doesn't lose what was typed */}
             <div className={sidebarTab === 'list' ? '' : 'd-none'} role="tabpanel">
-              <ViewSidebar activities={activities} selectedId={selectedId} onSelect={selectActivity} />
+              <ViewSidebar activities={visibleActivities} selectedId={selectedId} onSelect={selectActivity} />
             </div>
 
             <div className={sidebarTab === 'form' ? '' : 'd-none'} role="tabpanel">

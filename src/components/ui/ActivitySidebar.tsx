@@ -181,7 +181,7 @@ function ActivitySidebar({ activity, date, onSave, onCreate, onCancel }: Activit
       onSave?.({ ...activity, ...changes });
     } catch (error) {
       console.error('Error saving activity:', error);
-      setSaveError('Could not save changes');
+      setSaveError('Could not save changes: ' + (error instanceof Error ? error.message : 'unknown error'));
     } finally {
       setSaving(false);
     }
@@ -229,7 +229,7 @@ function ActivitySidebar({ activity, date, onSave, onCreate, onCancel }: Activit
       onCreate?.({ ...data, id: id, notes: trimmedNotes });
     } catch (error) {
       console.error('Error creating activity:', error);
-      setSaveError('Could not save activity');
+      setSaveError('Could not save activity: ' + (error instanceof Error ? error.message : 'unknown error'));
     } finally {
       setSaving(false);
     }

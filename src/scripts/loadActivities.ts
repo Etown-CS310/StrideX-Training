@@ -1,53 +1,25 @@
-import { collection, getDocs, query, where } from 'firebase/firestore';
-
-import { db } from '../firebase';
 import type { ActivityData } from './activityMapper';
-import { getCurrentUserId } from './currentUser';
+import { apiFetch } from './api';
 
 export interface Activity extends ActivityData {
   id: string;
   notes: string;
 }
 
+// Dates arrive from the API as ISO strings
+type ActivityJson = Omit<Activity, 'startTime'> & { startTime: string | null };
+
 /**
- * Gets every activity for the current user.
- * Only filters on userId, so Firestore doesn't need a composite index.
+ * Gets every activity for the logged in user with GET /api/activities.
  * @returns The user's activities, oldest first.
  */
 export async function loadActivities(): Promise<Activity[]> {
-  const activitiesQuery = query(collection(db, 'activities'), where('userId', '==', getCurrentUserId()));
-  const snapshot = await getDocs(activitiesQuery);
+  const result = await apiFetch<{ activities: ActivityJson[] }>('/activities');
 
-  const activities: Activity[] = [];
-  for (const doc of snapshot.docs) {
-    const data = doc.data();
-
-    // Firestore gives back a timestamp instead of a date
-    let startTime: Date | null = null;
-    if (data.startTime != null) {
-      startTime = data.startTime.toDate();
-    }
-
-    activities.push({
-      id: doc.id,
-      type: data.type,
-      workoutType: data.workoutType ?? null,
-      title: data.title,
-      startTime: startTime,
-      distance: data.distance,
-      duration: data.duration,
-      hrAvg: data.hrAvg,
-      hrMax: data.hrMax,
-      elevation: data.elevation,
-      calories: data.calories,
-      cadence: data.cadence,
-      power: data.power,
-      notes: data.notes ?? '',
-    });
-  }
-
-  activities.sort((a, b) => (a.startTime?.getTime() ?? 0) - (b.startTime?.getTime() ?? 0));
-  return activities;
+  return result.activities.map((activity) => ({
+    ...activity,
+    startTime: activity.startTime == null ? null : new Date(activity.startTime),
+  }));
 }
 
 // Convert dates to YYYY-MM-DD string
