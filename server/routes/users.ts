@@ -1,11 +1,14 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { FieldValue } from 'firebase-admin/firestore';
+import { OAuth2Client } from 'google-auth-library';
 
 import { db } from '../firebase.ts';
 import { createToken } from '../auth.ts';
 
 const router = Router();
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID); // visible in the browser (not secret)
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
@@ -88,6 +91,66 @@ router.post('/login', async (req, res) => {
   res.status(200).json({
     token: createToken(userDoc.id),
     user: { id: userDoc.id, email: userDoc.get('email'), name: userDoc.get('name') },
+  });
+});
+
+/**
+ * POST /api/google
+ * Body: { credential } (the ID token Google gives the browser)
+ * 200 with { token, user } | 400 missing credential | 401 token rejected by Google
+ */
+router.post('/google', async (req, res) => {
+  const { credential } = req.body ?? {};
+
+  if (typeof credential !== 'string' || credential === '') {
+    res.status(400).json({ error: 'Google credential is required' });
+    return;
+  }
+
+  // Google's library checks the signature, expiry, and that the token was made for OUR client id
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    payload = ticket.getPayload();
+  } catch {
+    res.status(401).json({ error: 'Google sign-in failed' });
+    return;
+  }
+
+  if (payload == null || typeof payload.email !== 'string' || !payload.email_verified) {
+    res.status(401).json({ error: 'Google account email is not verified' });
+    return;
+  }
+
+  const cleanEmail = payload.email.trim().toLowerCase();
+  const snapshot = await db.collection('users').where('email', '==', cleanEmail).limit(1).get();
+
+  // Existing account (password or Google) -> log in. Otherwise create one with no password.
+  if (!snapshot.empty) {
+    const userDoc = snapshot.docs[0];
+    res.status(200).json({
+      token: createToken(userDoc.id),
+      user: { id: userDoc.id, email: userDoc.get('email'), name: userDoc.get('name') },
+    });
+    return;
+  }
+
+  const displayName = payload.name?.trim() || cleanEmail.split('@')[0];
+  const userRef = await db.collection('users').add({
+    email: cleanEmail,
+    name: displayName,
+    passwordHash: null,
+    isCoach: false,
+    teamId: null,
+    createdAt: FieldValue.serverTimestamp(),
+  });
+
+  res.status(201).json({
+    token: createToken(userRef.id),
+    user: { id: userRef.id, email: cleanEmail, name: displayName },
   });
 });
 

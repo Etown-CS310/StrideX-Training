@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { DoorOpenFill, PersonFillAdd, Google } from 'react-bootstrap-icons';
+import { GoogleLogin } from '@react-oauth/google';
+import { DoorOpenFill, PersonFillAdd } from 'react-bootstrap-icons';
 
 import { apiFetch } from '../../scripts/api';
 import { saveSession, type Session } from '../../scripts/currentUser';
@@ -48,6 +49,29 @@ function Auth({ mode }: { mode: 'login' | 'register' }) {
         email: email,
         password: password,
       });
+      saveSession(session);
+      navigate('/training');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  /**
+   * Handles the Google OAuth success response by sending the credential to the server.
+   * @param credential - The credential received from Google OAuth.
+   * @throws Will throw an error if the Google sign-in fails or if the server returns an error.
+   */
+  async function handleGoogleSuccess(credential: string | undefined) {
+    if (credential == null) {
+      setError('Google sign-in failed');
+      return;
+    }
+    setError('');
+    setSubmitting(true);
+    try {
+      const session = await apiFetch<Session>('/google', 'POST', { credential: credential });
       saveSession(session);
       navigate('/training');
     } catch (err) {
@@ -148,16 +172,16 @@ function Auth({ mode }: { mode: 'login' | 'register' }) {
 
           <div className="or-divider">OR</div>
 
-          {/* Google Auth Button (not implemented yet) */}
-          <button
-            type="button"
-            disabled
-            title="Coming soon"
-            className="btn bg-stridex-grey rounded-pill border-0 d-inline-flex align-items-center justify-content-center text-white p-2 px-3 my-1 transition-ui hover-bg-stridex-darkgreen-hover focus-stridex"
-          >
-            <Google size={16} className="me-2" />
-            Continue with Google
-          </button>
+          {/* Google Auth Button */}
+          <div className="d-flex justify-content-center">
+            <GoogleLogin
+              onSuccess={(res) => handleGoogleSuccess(res.credential)}
+              onError={() => setError('Google sign-in failed')}
+              theme="filled_black"
+              shape="pill"
+              text="continue_with"
+            />
+          </div>
 
           {/* Swap Login and Register */}
           <div className="register-link text-center mt-2">

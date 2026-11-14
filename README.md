@@ -146,6 +146,7 @@ Endpoints marked (auth) need the header `Authorization: Bearer <token>`, using t
 |---|---|---|
 | `POST` | `/api/register` | Create an account |
 | `POST` | `/api/login` | Log in |
+| `POST` | `/api/google` | Log in with Google OAuth |
 | `GET` | `/api/activities` (auth) | List the logged in user's activities |
 | `GET` | `/api/activities/:id` (auth) | Get one activity with its laps |
 | `POST` | `/api/activities` (auth) | Create an activity (and its laps) |
@@ -188,6 +189,23 @@ Endpoints marked (auth) need the header `Authorization: Bearer <token>`, using t
 | 200 | Logged in |
 | 400 | Missing email or password |
 | 401 | `{ "error": "Incorrect email or password" }` |
+| 500 | Server error |
+</details>
+
+<details>
+<summary><code>POST /api/google</code> — log in with Google OAuth</summary>
+
+**Body**
+```json
+{ "credential": "google_id_token" }
+```
+**200 OK** — same shape as register (`token` + `user`)
+
+| Status | When |
+|---|---|
+| 200 | Logged in |
+| 400 | Missing credential |
+| 401 | `{ "error": "Google sign-in failed" }` |
 | 500 | Server error |
 </details>
 
