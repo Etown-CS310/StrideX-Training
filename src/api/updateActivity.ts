@@ -1,4 +1,4 @@
-import { apiFetch } from './api';
+import { apiFetch } from './client';
 import type { Activity } from './loadActivities';
 
 export type ActivityChanges = Partial<Omit<Activity, 'id'>>;

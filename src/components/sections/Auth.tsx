@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { DoorOpenFill, PersonFillAdd } from 'react-bootstrap-icons';
 
-import { apiFetch } from '../../scripts/api';
-import { saveSession, type Session } from '../../scripts/currentUser';
+import { apiFetch } from '../../api/client';
+import { saveSession, type Session } from '../../api/currentUser';
 import './Auth.css';
 
 const MIN_PASSWORD_LENGTH = 8;

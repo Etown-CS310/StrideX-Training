@@ -1,14 +1,5 @@
-import { readFileSync } from "node:fs";
-import { initializeApp, cert, type ServiceAccount } from "firebase-admin/app";
-import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
-
-// ESM has no `require`, so read the key file relative to this script instead
-const serviceAccount: ServiceAccount = JSON.parse(
-  readFileSync(new URL("../../serviceAccount.json", import.meta.url), "utf8"),
-);
-
-initializeApp({ credential: cert(serviceAccount) });
-const db = getFirestore();
+import { Timestamp, FieldValue } from "firebase-admin/firestore";
+import { db } from "./firebase.ts";
 
 /**
  * Seeds Firestore with a demo team, a demo athlete, and one activity with a lap.

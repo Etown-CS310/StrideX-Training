@@ -1,5 +1,5 @@
-import type { ActivityData } from './activityMapper';
-import { apiFetch } from './api';
+import type { ActivityData } from '../parsers/activityMapper';
+import { apiFetch } from './client';
 
 export interface Activity extends ActivityData {
   id: string;

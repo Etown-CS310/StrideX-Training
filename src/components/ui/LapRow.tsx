@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { TrashFill } from 'react-bootstrap-icons';
 
 import type { Lap } from '../../types/lap';
-import { fromSeconds, toSeconds } from '../../scripts/time';
-import { clampNumberInput } from '../../scripts/input';
+import { fromSeconds, toSeconds } from '../../utils/time';
+import { clampNumberInput } from '../../utils/input';
 
 import './LapRow.css';
 

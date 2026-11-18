@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import logo from '../../assets/branding/logo.svg'
-import { clearSession, useCurrentUser } from '../../scripts/currentUser';
+import { clearSession, useCurrentUser } from '../../api/currentUser';
 import './Header.css'
 
 function Header() {

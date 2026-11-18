@@ -1,5 +1,5 @@
 import type { Lap } from '../../types/lap';
-import { formatDuration } from '../../scripts/time';
+import { formatDuration } from '../../utils/time';
 
 /**
  * Renders a read-only display of a lap's details.

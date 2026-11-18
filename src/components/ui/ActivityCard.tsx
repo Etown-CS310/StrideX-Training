@@ -1,4 +1,4 @@
-import { formatDuration } from '../../scripts/time';
+import { formatDuration } from '../../utils/time';
 
 
 interface ActivityCardProps {

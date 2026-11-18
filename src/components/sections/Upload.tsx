@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CloudArrowUp, Eraser, FileEarmarkArrowUp, Floppy, PencilSquare } from 'react-bootstrap-icons';
 
-import { csvToRows, parseCsvFile } from '../../scripts/csvParser';
-import { parseFitFile } from '../../scripts/fitParser';
+import { csvToRows, parseCsvFile } from '../../parsers/csvParser';
+import { parseFitFile } from '../../parsers/fitParser';
 import {
   detectCsvType,
   fromFit,
@@ -11,11 +11,11 @@ import {
   fromSingleCsv,
   type ActivityData,
   type ActivityUpload,
-} from '../../scripts/activityMapper';
-import { uploadActivity } from '../../scripts/uploadActivity';
-import { clampNumberInput } from '../../scripts/input';
-import { formatDuration } from '../../scripts/time';
-import { ACTIVITY_TYPES, WORKOUT_TYPES } from '../../scripts/activityTypes';
+} from '../../parsers/activityMapper';
+import { uploadActivity } from '../../api/uploadActivity';
+import { clampNumberInput } from '../../utils/input';
+import { formatDuration } from '../../utils/time';
+import { ACTIVITY_TYPES, WORKOUT_TYPES } from '../../utils/activityTypes';
 
 import './Upload.css';
 

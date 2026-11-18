@@ -26,7 +26,7 @@ A training calendar that allows users to organize activities and coaches to view
 ## Architecture
 ```
 React + Vite (browser)  ──fetch('/api/...')──▶  Express API (server/)  ──firebase-admin──▶  Cloud Firestore
-   src/scripts/api.ts         JSON + JWT          validation, bcrypt,                       users, activities,
+   src/api/client.ts          JSON + JWT          validation, bcrypt,                       users, activities,
                                                   auth middleware                           laps
 ```
 The browser never talks to the database directly. Every read and write goes through the Express API, which checks the login token and validates the request first. During development Vite forwards `/api` requests to the API server.
@@ -61,6 +61,8 @@ cp .env.example .env
    |---|---|---|
    | `JWT_SECRET` | yes | Long random string used to sign login tokens. Generate one with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
    | `FIREBASE_SERVICE_ACCOUNT` | no | Path to the service account key (default `serviceAccount.json`) |
+   | `GOOGLE_CLIENT_ID` | for Google sign-in | OAuth client ID the server uses to verify Google logins. Create one in the [Google Cloud console](https://console.cloud.google.com/apis/credentials) (type **Web application**, add `http://localhost:5173` as an authorized JavaScript origin) |
+   | `VITE_GOOGLE_CLIENT_ID` | for Google sign-in | Same value as `GOOGLE_CLIENT_ID`; the front-end reads this one. Restart `npm run dev` after changing it |
    | `PORT` | no | API server port (default `3001`) |
 
 ## Running Locally

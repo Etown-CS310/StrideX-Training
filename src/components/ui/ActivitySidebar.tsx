@@ -5,13 +5,13 @@ import LapRow from '../ui/LapRow';
 import LapDisplayRow from './LapDisplayRow';
 
 import { createEmptyLap, type Lap } from '../../types/lap';
-import { formatDuration, fromSeconds } from '../../scripts/time';
-import { clampNumberInput } from '../../scripts/input';
-import type { Activity } from '../../scripts/loadActivities';
-import type { ActivityData, LapData } from '../../scripts/activityMapper';
-import { updateActivity, type ActivityChanges } from '../../scripts/updateActivity';
-import { uploadActivity } from '../../scripts/uploadActivity';
-import { ACTIVITY_TYPES, WORKOUT_TYPES } from '../../scripts/activityTypes';
+import { formatDuration, fromSeconds } from '../../utils/time';
+import { clampNumberInput } from '../../utils/input';
+import type { Activity } from '../../api/loadActivities';
+import type { ActivityData, LapData } from '../../parsers/activityMapper';
+import { updateActivity, type ActivityChanges } from '../../api/updateActivity';
+import { uploadActivity } from '../../api/uploadActivity';
+import { ACTIVITY_TYPES, WORKOUT_TYPES } from '../../utils/activityTypes';
 import './ActivitySidebar.css';
 
 // Firestore stores meters, the form shows miles/km and feet

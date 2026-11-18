@@ -11,7 +11,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "seed": "node src/scripts/seedData.ts",
+    "seed": "node --env-file-if-exists=.env server/seed.ts",
     "stop": "node server/freePorts.ts"
   },
   "dependencies": {

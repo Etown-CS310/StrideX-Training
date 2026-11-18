@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 import ActivityCard from "../ui/ActivityCard";
-import type { Activity } from '../../scripts/loadActivities';
-import { ACTIVITY_TYPES } from '../../scripts/activityTypes';
+import type { Activity } from '../../api/loadActivities';
+import { ACTIVITY_TYPES } from '../../utils/activityTypes';
 
 const METERS_PER_MILE = 1609.344;
 

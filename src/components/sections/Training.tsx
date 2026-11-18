@@ -6,8 +6,8 @@ import type { Value } from 'react-calendar/dist/shared/types.js';
 
 import ActivitySidebar from '../ui/ActivitySidebar';
 import ViewSidebar from '../ui/ViewSidebar';
-import { dateKey, loadActivities, type Activity } from '../../scripts/loadActivities';
-import { useCurrentUser } from '../../scripts/currentUser';
+import { dateKey, loadActivities, type Activity } from '../../api/loadActivities';
+import { useCurrentUser } from '../../api/currentUser';
 
 import './Training.css';
 
