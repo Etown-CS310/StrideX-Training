@@ -62,6 +62,7 @@ cp .env.example .env
    | `JWT_SECRET` | yes | Long random string used to sign login tokens. Generate one with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
    | `FIREBASE_SERVICE_ACCOUNT` | no | Path to the service account key (default `serviceAccount.json`) |
    | `GOOGLE_CLIENT_ID` | for Google sign-in | OAuth client ID the server uses to verify Google logins. Create one in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials) (select the same project as your Firebase project, then **Create Credentials → OAuth client ID → Web application**). Add `http://localhost:5173` as an authorized JavaScript origin. Not secret, but do not confuse it with the Firebase API key |
+   | `VITE_GOOGLE_CLIENT_ID` | for Google sign-in | Same value as `GOOGLE_CLIENT_ID`, but prefixed with `VITE_` so the front-end can read it |
    | `PORT` | no | API server port (default `3001`) |
 
 ## Running Locally
