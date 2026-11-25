@@ -9,6 +9,7 @@ try {
 
 const { default: userRoutes } = await import('./routes/users.ts');
 const { default: activityRoutes } = await import('./routes/activities.ts');
+const { default: teamRoutes } = await import('./routes/teams.ts');
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3001);
@@ -17,6 +18,7 @@ app.use(express.json({ limit: '2mb' }));
 
 app.use('/api', userRoutes);
 app.use('/api/activities', activityRoutes);
+app.use('/api/team', teamRoutes);
 
 // Unknown API routes
 app.use('/api', (_req, res) => {

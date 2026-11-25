@@ -21,6 +21,8 @@ A training calendar that allows users to organize activities and coaches to view
 
 - **File Upload & Manual Entry** — Import Garmin `.fit` / `.csv` exports, or type an activity in by hand
 
+- **Coaches & Teams** — Creating a team makes you its coach (one team per coach, transferable). Athletes join with a join code. Coaches can view their athletes' training data, weekly/monthly summaries per athlete or for the whole team, and set measurable team goals
+
 - **Custom Bootstrap Styling** — User interface is styled using modified bootstrap with StrideX branding
 
 ## Architecture
@@ -81,11 +83,13 @@ This starts both the API server (`http://localhost:3001`) and the website (`http
 | `npm run stop` | Stop leftover dev servers still holding ports 3001/5173 (also runs automatically before `npm run dev`) |
 
 ## Database Design
-Cloud Firestore (NoSQL). Each box below is a collection. `laps` is a subcollection stored under each activity document.
+Cloud Firestore (NoSQL). Each box below is a collection. `laps` is a subcollection stored under each activity document, and `goals` is a subcollection under each team.
 
 ```mermaid
 erDiagram
     TEAMS ||--o{ USERS : "has members"
+    USERS ||--o| TEAMS : "coaches"
+    TEAMS ||--o{ GOALS : "sets"
     USERS ||--o{ ACTIVITIES : "logs"
     ACTIVITIES ||--o{ LAPS : "split into"
 
@@ -93,6 +97,20 @@ erDiagram
         string id PK
         string name
         string description
+        string coachId FK "the one user who coaches this team"
+        string joinCode UK "6 characters, shared with athletes"
+        timestamp createdAt
+    }
+    GOALS {
+        string id PK
+        string title
+        string metric "distance, duration, activityCount"
+        number target "meters, seconds, or a count"
+        string period "week or month"
+        string activityType "run, bike, swim... null = all"
+        string appliesTo "team (team total) or each (every athlete)"
+        string createdBy FK
+        timestamp createdAt
     }
     USERS {
         string id PK
@@ -135,8 +153,9 @@ erDiagram
 
 | Collection | Purpose |
 |---|---|
-| `users` | One document per account, stores the bcrypt password hash. `isCoach` and `teamId` support the upcoming coach and group features |
-| `teams` | Running clubs and teams that users can belong to |
+| `users` | One document per account, stores the bcrypt password hash. `teamId` is the one team the user is on (as coach or athlete). `isCoach` is the coach role flag |
+| `teams` | Teams that users belong to. `coachId` decides who coaches it; everyone else on the team is an athlete |
+| `teams/{id}/goals` | Measurable weekly/monthly targets set by the coach. Progress is calculated by the summary endpoints |
 | `activities` | One workout that belongs to a user through `userId`. Distances are stored in meters and durations in seconds, and the UI converts them for display |
 | `activities/{id}/laps` | Splits within an activity (from FIT/CSV files or entered by hand) |
 
@@ -154,6 +173,29 @@ Endpoints marked (auth) need the header `Authorization: Bearer <token>`, using t
 | `POST` | `/api/activities` (auth) | Create an activity (and its laps) |
 | `PATCH` | `/api/activities/:id` (auth) | Update some fields of an activity |
 | `DELETE` | `/api/activities/:id` (auth) | Delete an activity and its laps |
+| `GET` | `/api/me` (auth) | The logged in user (incl. `isCoach`, `teamId`) |
+| `PATCH` | `/api/me` (auth) | Change `name` or `isCoach` |
+| `POST` | `/api/team` (auth) | Create a team and become its coach |
+| `GET` | `/api/team` (auth, member) | My team, its coach and athletes |
+| `PATCH` | `/api/team` (auth, coach) | Rename / change description |
+| `DELETE` | `/api/team` (auth, coach) | Delete the team (members are removed, goals deleted) |
+| `POST` | `/api/team/join-code` (auth, coach) | Make a new join code |
+| `POST` | `/api/team/join` (auth) | Join a team with a join code |
+| `POST` | `/api/team/leave` (auth, athlete) | Leave the team |
+| `DELETE` | `/api/team/members/:userId` (auth, coach) | Remove an athlete |
+| `POST` | `/api/team/transfer` (auth, coach) | Make another team member the coach |
+| `GET` | `/api/team/athletes/:athleteId/activities` (auth, coach) | An athlete's activities (training calendar data) |
+| `GET` | `/api/team/athletes/:athleteId/activities/:activityId` (auth, coach) | One of an athlete's activities with laps |
+| `GET` | `/api/team/athletes/:athleteId/summary` (auth, coach) | Weekly/monthly summary for one athlete |
+| `GET` | `/api/team/summary` (auth, coach) | Weekly/monthly summary for the whole team |
+| `GET` | `/api/team/goals` (auth, member) | List team goals |
+| `POST` | `/api/team/goals` (auth, coach) | Create a goal |
+| `PATCH` | `/api/team/goals/:goalId` (auth, coach) | Edit a goal |
+| `DELETE` | `/api/team/goals/:goalId` (auth, coach) | Delete a goal |
+
+**Roles:** "member" = anyone on the team, "coach" = the team's `coachId`, "athlete" = a member who isn't the coach. Coach-only routes return **403** to athletes, and team routes return **404** `{ "error": "You are not on a team" }` when the user has no team. Coaches can only *read* athlete data; the `/api/activities` routes stay owner-only.
+
+Register, login, and Google responses now return `user` as `{ id, email, name, isCoach, teamId }`. Register also accepts an optional `"isCoach": true`.
 
 <details>
 <summary><code>POST /api/register</code> — create an account</summary>
@@ -316,6 +358,178 @@ Endpoints marked (auth) need the header `Authorization: Bearer <token>`, using t
 | 200 | Deleted (laps too) |
 | 401 | Not logged in |
 | 404 | No such activity, or it belongs to another user |
+</details>
+
+<details>
+<summary><code>GET</code> / <code>PATCH /api/me</code> (auth) — current user</summary>
+
+**PATCH body** — any of
+```json
+{ "name": "Coach Kim", "isCoach": true }
+```
+**200 OK**
+```json
+{ "user": { "id": "Be95hbNDpY6brwC61gKR", "email": "kim@example.com", "name": "Coach Kim", "isCoach": true, "teamId": "T7x..." } }
+```
+| Status | When |
+|---|---|
+| 200 | Success |
+| 400 | Invalid or no fields |
+| 401 | Not logged in |
+| 409 | `isCoach: false` while coaching a team (transfer or delete the team first) |
+</details>
+
+<details>
+<summary><code>POST /api/team</code> (auth) — create a team and become its coach</summary>
+
+**Body**
+```json
+{ "name": "Etown XC", "description": "Cross country" }
+```
+**201 Created**
+```json
+{ "team": { "id": "T7x...", "name": "Etown XC", "description": "Cross country", "coachId": "Be95...", "joinCode": "K7PQ2M", "createdAt": "2026-11-20T15:00:00.000Z" } }
+```
+| Status | When |
+|---|---|
+| 201 | Created; the caller's `teamId` is set and `isCoach` becomes `true` |
+| 400 | Missing name, or name/description too long |
+| 409 | Already on a team (a user can only be on, or coach, one team) |
+</details>
+
+<details>
+<summary><code>GET /api/team</code> (auth, member) — my team</summary>
+
+**200 OK** (`joinCode` and member `email`s are only included for the coach)
+```json
+{
+  "team": { "id": "T7x...", "name": "Etown XC", "description": "", "coachId": "Be95...", "joinCode": "K7PQ2M", "createdAt": "..." },
+  "coach": { "id": "Be95...", "name": "Coach Kim", "email": "kim@example.com" },
+  "athletes": [ { "id": "aQ1...", "name": "Alice", "email": "alice@example.com" } ],
+  "viewerIsCoach": true
+}
+```
+| Status | When |
+|---|---|
+| 200 | Success |
+| 404 | Not on a team |
+</details>
+
+<details>
+<summary><code>POST /api/team/join</code> (auth) — join with a code</summary>
+
+**Body** (not case sensitive)
+```json
+{ "code": "K7PQ2M" }
+```
+**200 OK** — `{ "team": { ... } }` (no join code)
+
+| Status | When |
+|---|---|
+| 200 | Joined as an athlete |
+| 400 | Missing code |
+| 404 | No team has that code |
+| 409 | Already on a team |
+</details>
+
+<details>
+<summary>Other membership routes (<code>leave</code>, <code>members/:userId</code>, <code>transfer</code>, <code>join-code</code>, <code>PATCH</code>/<code>DELETE /api/team</code>)</summary>
+
+| Request | Response |
+|---|---|
+| `POST /api/team/leave` | `{ "left": teamId }`. **409** for the coach (transfer or delete first) |
+| `DELETE /api/team/members/:userId` | `{ "removed": userId }`. **404** if not an athlete on the team |
+| `POST /api/team/transfer` body `{ "userId": "aQ1..." }` | `{ "team": {...} }`. The athlete becomes coach (`isCoach: true`); the old coach stays on the team as an athlete (`isCoach: false`). **404** if not an athlete on the team |
+| `POST /api/team/join-code` | `{ "joinCode": "N3WC0D" }`; the old code stops working |
+| `PATCH /api/team` body `{ "name"?, "description"? }` | `{ "team": {...} }` |
+| `DELETE /api/team` | `{ "deleted": teamId }`; every member's `teamId` becomes `null` and goals are deleted |
+</details>
+
+<details>
+<summary><code>GET /api/team/athletes/:athleteId/activities</code> (auth, coach) — an athlete's training data</summary>
+
+Optional query `from` / `to` (ISO dates, `to` exclusive). Activities use the same shape as `GET /api/activities`. `GET /api/team/athletes/:athleteId/activities/:activityId` returns `{ activity, laps }` like `GET /api/activities/:id`.
+
+**200 OK**
+```json
+{
+  "athlete": { "id": "aQ1...", "name": "Alice", "email": "alice@example.com" },
+  "activities": [ { "id": "HKs3...", "type": "run", "title": "Morning run", "startTime": "2026-11-17T12:00:00.000Z", "distance": 10000, "duration": 3000, "...": "..." } ]
+}
+```
+| Status | When |
+|---|---|
+| 200 | Success |
+| 400 | Bad `from`/`to` |
+| 403 | Caller isn't the coach |
+| 404 | That user isn't an athlete on your team (or activity not found) |
+</details>
+
+<details>
+<summary><code>GET /api/team/summary</code> and <code>/api/team/athletes/:athleteId/summary</code> (auth, coach) — weekly/monthly summaries</summary>
+
+**Query**
+| Param | Default | Meaning |
+|---|---|---|
+| `period` | `week` | `week` (Monday–Sunday) or `month` |
+| `date` | today | `YYYY-MM-DD`; the summary covers the week/month containing it |
+| `tzOffset` | `0` | The browser's `new Date().getTimezoneOffset()` so periods line up with the user's local calendar |
+
+Totals (`team`, each `athletes[].totals`, and the athlete summary's `totals`) look like:
+```json
+{
+  "activityCount": 3, "distance": 44000, "duration": 8100, "elevation": 0, "calories": 0,
+  "hrAvg": 150,
+  "byType": { "run": { "activityCount": 2, "distance": 14000, "duration": 4500 }, "bike": { "activityCount": 1, "distance": 30000, "duration": 3600 } }
+}
+```
+`hrAvg` is weighted by duration (`null` if no heart rate data). Each goal is measured over **its own** period (the week or month containing `date`), whatever `period` the summary uses.
+
+**Team summary 200 OK**
+```json
+{
+  "period": { "period": "week", "startDate": "2026-11-16", "start": "2026-11-16T05:00:00.000Z", "end": "2026-11-23T05:00:00.000Z" },
+  "team": { "activityCount": 3, "distance": 44000, "...": "..." },
+  "athletes": [ { "id": "aQ1...", "name": "Alice", "email": "...", "totals": { "...": "..." } } ],
+  "goals": [
+    {
+      "goal": { "id": "g1", "title": "Team 12k run", "metric": "distance", "target": 12000, "period": "week", "activityType": "run", "appliesTo": "team", "...": "..." },
+      "period": { "...": "..." },
+      "current": 14000,
+      "met": true,
+      "athletesMet": null,
+      "athletes": [ { "id": "aQ1...", "name": "Alice", "current": 10000, "met": null } ]
+    }
+  ]
+}
+```
+For `appliesTo: "team"`, `current` is the team total and `met` compares it to `target`. For `appliesTo: "each"`, every athlete has their own `met`, `athletesMet` counts them, and the goal is `met` when all athletes are.
+
+**Athlete summary 200 OK** — `{ period, athlete, totals, goals: [{ goal, period, current, met }] }`, where `met` is `null` for team-total goals.
+
+| Status | When |
+|---|---|
+| 200 | Success |
+| 400 | Bad `period`, `date`, or `tzOffset` |
+| 403 | Caller isn't the coach |
+| 404 | Not on a team, or athlete not on your team |
+</details>
+
+<details>
+<summary><code>/api/team/goals</code> — team goals</summary>
+
+**POST body** (coach). `activityType` (default `null` = all types) and `appliesTo` (default `team`) are optional.
+```json
+{ "title": "Run 20 km as a team", "metric": "distance", "target": 20000, "period": "week", "activityType": "run", "appliesTo": "team" }
+```
+`metric`: `distance` (meters), `duration` (seconds), or `activityCount`. `target` must be a positive number.
+
+| Request | Response |
+|---|---|
+| `GET /api/team/goals` (any member) | `{ "goals": [ { "id", "title", "metric", "target", "period", "activityType", "appliesTo", "createdBy", "createdAt" } ] }` |
+| `POST /api/team/goals` | **201** `{ "goal": {...} }`, **400** on invalid fields |
+| `PATCH /api/team/goals/:goalId` (any subset of fields) | `{ "goal": {...} }`, **404** if missing |
+| `DELETE /api/team/goals/:goalId` | `{ "deleted": goalId }`, **404** if missing |
 </details>
 
 Other errors: unknown endpoints return **404** `{ "error": "Endpoint not found" }`, malformed JSON returns **400**, and unexpected failures return **500** `{ "error": "Something went wrong on the server" }`.
