@@ -1,5 +1,5 @@
 import { Router, type Response } from 'express';
-import { FieldValue, Timestamp, type DocumentSnapshot } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp, type DocumentSnapshot, type Transaction } from 'firebase-admin/firestore';
 
 import { db } from '../firebase.ts';
 import { requireAuth } from '../auth.ts';
@@ -12,6 +12,8 @@ import {
   activitiesInRange, GOAL_METRICS, goalValue, parsePeriodQuery, periodRange, PERIODS, summarize,
   type Goal, type GoalMetric, type Period,
 } from '../lib/summary.ts';
+import { isDocId } from '../lib/docId.ts';
+import { joinLimiter } from '../lib/rateLimits.ts';
 
 const router = Router();
 
@@ -157,6 +159,30 @@ function memberForViewer(member: DocumentSnapshot, viewerIsCoach: boolean): Fiel
 }
 
 /**
+ * True if the user's teamId points at a team that still exists (read inside the transaction).
+ * A teamId left behind by a deleted team doesn't count, so the user can still create or join one.
+ */
+async function isOnTeam(tx: Transaction, user: DocumentSnapshot): Promise<boolean> {
+  const teamId = user.get('teamId');
+  if (!isDocId(teamId)) return false;
+  return (await tx.get(db.collection('teams').doc(teamId))).exists;
+}
+
+/**
+ * The goal named in the URL, or null (after sending a 404) if the id isn't valid or the goal doesn't exist.
+ */
+async function goalFromParams(res: Response, goalId: string): Promise<DocumentSnapshot | null> {
+  const goal = isDocId(goalId)
+    ? await db.collection('teams').doc(teamOf(res).id).collection('goals').doc(goalId).get()
+    : null;
+  if (goal == null || !goal.exists) {
+    res.status(404).json({ error: 'Goal not found' });
+    return null;
+  }
+  return goal;
+}
+
+/**
  * Loads the athlete named in the URL, or sends a 404 and returns null if they aren't on the coach's team.
  */
 async function athleteFromParams(res: Response, athleteId: string): Promise<DocumentSnapshot | null> {
@@ -189,7 +215,7 @@ router.post('/', async (req, res) => {
   const outcome = await db.runTransaction(async (tx) => {
     const user = await tx.get(userRef);
     if (!user.exists) return 'no-user';
-    if (user.get('teamId')) return 'on-team';
+    if (await isOnTeam(tx, user)) return 'on-team';
     tx.set(teamRef, {
       ...checked.fields,
       coachId: userRef.id,
@@ -258,13 +284,18 @@ router.patch('/', requireTeam, requireCoach, async (req, res) => {
 router.delete('/', requireTeam, requireCoach, async (_req, res) => {
   const team = teamOf(res);
   const teamRef = db.collection('teams').doc(team.id);
-  const [members, goals] = await Promise.all([loadTeamMembers(team.id), teamRef.collection('goals').get()]);
 
-  const batch = db.batch();
-  for (const member of members) batch.update(member.ref, { teamId: null });
-  for (const goal of goals.docs) batch.delete(goal.ref);
-  batch.delete(teamRef);
-  await batch.commit();
+  // In a transaction so someone joining at the same moment can't be left pointing at the deleted team
+  // (the join transaction reads the team doc, so it retries and finds the team gone)
+  await db.runTransaction(async (tx) => {
+    const [members, goals] = await Promise.all([
+      tx.get(db.collection('users').where('teamId', '==', team.id)),
+      tx.get(teamRef.collection('goals')),
+    ]);
+    for (const member of members.docs) tx.update(member.ref, { teamId: null });
+    for (const goal of goals.docs) tx.delete(goal.ref);
+    tx.delete(teamRef);
+  });
 
   res.status(200).json({ deleted: team.id });
 });
@@ -285,7 +316,7 @@ router.post('/join-code', requireTeam, requireCoach, async (_req, res) => {
  * Body: { code } (not case sensitive)
  * 200 with { team } | 400 | 401 | 404 unknown code | 409 already on a team
  */
-router.post('/join', async (req, res) => {
+router.post('/join', joinLimiter, async (req, res) => {
   const { code } = req.body ?? {};
   if (typeof code !== 'string' || code.trim() === '') {
     res.status(400).json({ error: 'Join code is required' });
@@ -304,7 +335,7 @@ router.post('/join', async (req, res) => {
   const outcome = await db.runTransaction(async (tx) => {
     const [user, team] = await Promise.all([tx.get(userRef), tx.get(teamRef)]);
     if (!user.exists) return 'no-user';
-    if (user.get('teamId')) return 'on-team';
+    if (await isOnTeam(tx, user)) return 'on-team';
     // The code could have been changed or the team deleted since the lookup
     if (!team.exists || team.get('joinCode') !== cleanCode) return 'no-team';
     tx.update(userRef, { teamId: teamRef.id });
@@ -360,6 +391,10 @@ router.post('/transfer', requireTeam, requireCoach, async (req, res) => {
   const { userId } = req.body ?? {};
   if (typeof userId !== 'string' || userId === '') {
     res.status(400).json({ error: 'userId is required' });
+    return;
+  }
+  if (!isDocId(userId)) {
+    res.status(404).json({ error: 'Athlete not found on your team' });
     return;
   }
 
@@ -577,13 +612,10 @@ router.patch('/goals/:goalId', requireTeam, requireCoach, async (req, res) => {
     res.status(400).json({ error: 'No valid fields to update' });
     return;
   }
-  const goalRef = db.collection('teams').doc(teamOf(res).id).collection('goals').doc(String(req.params.goalId));
-  if (!(await goalRef.get()).exists) {
-    res.status(404).json({ error: 'Goal not found' });
-    return;
-  }
-  await goalRef.update(checked.fields);
-  res.status(200).json({ goal: goalToJson(await goalRef.get()) });
+  const goal = await goalFromParams(res, String(req.params.goalId));
+  if (goal == null) return;
+  await goal.ref.update(checked.fields);
+  res.status(200).json({ goal: goalToJson(await goal.ref.get()) });
 });
 
 /**
@@ -591,13 +623,10 @@ router.patch('/goals/:goalId', requireTeam, requireCoach, async (req, res) => {
  * 200 with { deleted: id } | 401 | 403 | 404
  */
 router.delete('/goals/:goalId', requireTeam, requireCoach, async (req, res) => {
-  const goalRef = db.collection('teams').doc(teamOf(res).id).collection('goals').doc(String(req.params.goalId));
-  if (!(await goalRef.get()).exists) {
-    res.status(404).json({ error: 'Goal not found' });
-    return;
-  }
-  await goalRef.delete();
-  res.status(200).json({ deleted: goalRef.id });
+  const goal = await goalFromParams(res, String(req.params.goalId));
+  if (goal == null) return;
+  await goal.ref.delete();
+  res.status(200).json({ deleted: goal.id });
 });
 
 export default router;

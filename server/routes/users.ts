@@ -6,6 +6,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { db } from '../firebase.ts';
 import { createToken, requireAuth } from '../auth.ts';
 import { loadUser, userToJson } from '../lib/teamAccess.ts';
+import { authLimiter } from '../lib/rateLimits.ts';
 
 const router = Router();
 
@@ -21,7 +22,7 @@ const MAX_NAME_LENGTH = 100;
  * Body: { email, password, name?, isCoach? }
  * 201 with { token, user } | 400 invalid input | 409 email already registered
  */
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, async (req, res) => {
   const { email, password, name, isCoach } = req.body ?? {};
 
   if (typeof email !== 'string' || typeof password !== 'string') {
@@ -76,7 +77,7 @@ router.post('/register', async (req, res) => {
  * Body: { email, password }
  * 200 with { token, user } | 400 missing fields | 401 wrong email or password
  */
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   const { email, password } = req.body ?? {};
 
   if (typeof email !== 'string' || typeof password !== 'string' || email.trim() === '' || password === '') {
@@ -105,7 +106,7 @@ router.post('/login', async (req, res) => {
  * Body: { credential } (the ID token Google gives the browser)
  * 200 with { token, user } | 400 missing credential | 401 token rejected by Google
  */
-router.post('/google', async (req, res) => {
+router.post('/google', authLimiter, async (req, res) => {
   const { accessToken } = req.body ?? {};
 
   if (typeof accessToken !== 'string' || accessToken === '') {

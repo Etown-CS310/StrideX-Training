@@ -1,6 +1,7 @@
 import { Timestamp, type DocumentSnapshot } from 'firebase-admin/firestore';
 
 import { db } from '../firebase.ts';
+import { isDocId } from './docId.ts';
 
 /**
  * An activity as the API returns it (timestamps are ISO strings).
@@ -62,6 +63,7 @@ export async function loadUserActivities(userId: string): Promise<ActivityJson[]
  * Other users' activities are treated as missing so their ids can't be probed.
  */
 export async function findUserActivity(id: string, userId: string): Promise<DocumentSnapshot | null> {
+  if (!isDocId(id)) return null;
   const doc = await db.collection('activities').doc(id).get();
   if (!doc.exists || doc.get('userId') !== userId) return null;
   return doc;

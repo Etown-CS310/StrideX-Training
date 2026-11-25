@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { Timestamp, type DocumentSnapshot } from 'firebase-admin/firestore';
 
 import { db } from '../firebase.ts';
+import { isDocId } from './docId.ts';
 
 export interface UserJson {
   id: string;
@@ -50,6 +51,7 @@ export function teamToJson(doc: DocumentSnapshot): Team {
  * Loads a user document, or null if there is no such user.
  */
 export async function loadUser(userId: string): Promise<DocumentSnapshot | null> {
+  if (!isDocId(userId)) return null;
   const doc = await db.collection('users').doc(userId).get();
   return doc.exists ? doc : null;
 }
