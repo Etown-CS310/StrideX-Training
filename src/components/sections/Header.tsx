@@ -26,6 +26,7 @@ function Header() {
             <NavLink to="/training" className="nav-link px-0">Training</NavLink>
             <NavLink to="/groups" className="nav-link px-0">Groups</NavLink>
             <NavLink to="/upload" className="nav-link px-0">Upload</NavLink>
+            <NavLink to="/coaching" className="nav-link px-0">Coaching</NavLink>
           </div>
 
           {user == null ? (

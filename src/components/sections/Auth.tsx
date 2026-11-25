@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { GoogleLogin } from '@react-oauth/google';
-import { DoorOpenFill, PersonFillAdd } from 'react-bootstrap-icons';
+import { useGoogleLogin } from '@react-oauth/google';
+import { DoorOpenFill, Google, PersonFillAdd } from 'react-bootstrap-icons';
 
 import { apiFetch } from '../../api/client';
 import { saveSession, type Session } from '../../api/currentUser';
@@ -58,20 +58,21 @@ function Auth({ mode }: { mode: 'login' | 'register' }) {
     }
   }
 
+  const googleLogin = useGoogleLogin({
+    onSuccess: (res) => handleGoogleSuccess(res.access_token),
+    onError: () => setError('Google sign-in failed'),
+  });
+
   /**
    * Handles the Google OAuth success response by sending the credential to the server.
    * @param credential - The credential received from Google OAuth.
    * @throws Will throw an error if the Google sign-in fails or if the server returns an error.
    */
-  async function handleGoogleSuccess(credential: string | undefined) {
-    if (credential == null) {
-      setError('Google sign-in failed');
-      return;
-    }
+  async function handleGoogleSuccess(accessToken: string) {
     setError('');
     setSubmitting(true);
     try {
-      const session = await apiFetch<Session>('/google', 'POST', { credential: credential });
+      const session = await apiFetch<Session>('/google', 'POST', { accessToken: accessToken });
       saveSession(session);
       navigate('/training');
     } catch (err) {
@@ -173,18 +174,18 @@ function Auth({ mode }: { mode: 'login' | 'register' }) {
           <div className="or-divider">OR</div>
 
           {/* Google Auth Button */}
-          <div className="d-flex justify-content-center">
-            <GoogleLogin
-              onSuccess={(res) => handleGoogleSuccess(res.credential)}
-              onError={() => setError('Google sign-in failed')}
-              theme="filled_black"
-              shape="pill"
-              text="continue_with"
-            />
-          </div>
+          <button
+            type="button"
+            onClick={() => googleLogin()}
+            disabled={submitting}
+            className="btn bg-stridex-grey rounded-pill border-0 d-inline-flex align-items-center justify-content-center text-white p-2 px-3 my-1 transition-ui hover-bg-stridex-darkgreen-hover focus-stridex"
+          >
+            <Google size={16} className="me-2" />
+            Continue with Google
+          </button>
 
           {/* Swap Login and Register */}
-          <div className="register-link text-center mt-2">
+          <div className="register-link text-center mt-2" style={{ colorScheme: 'light' }}>
             {isRegistering ? 'Already have an account?' : "Don't have an account?"}{' '}
             <Link to={isRegistering ? '/login' : '/register'} className="text-stridex-green">
               {isRegistering ? 'Login' : 'Sign up'}

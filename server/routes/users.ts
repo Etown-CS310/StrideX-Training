@@ -106,32 +106,44 @@ router.post('/login', async (req, res) => {
  * 200 with { token, user } | 400 missing credential | 401 token rejected by Google
  */
 router.post('/google', async (req, res) => {
-  const { credential } = req.body ?? {};
+  const { accessToken } = req.body ?? {};
 
-  if (typeof credential !== 'string' || credential === '') {
-    res.status(400).json({ error: 'Google credential is required' });
+  if (typeof accessToken !== 'string' || accessToken === '') {
+    res.status(400).json({ error: 'Google access token is required' });
     return;
   }
 
-  // Google's library checks the signature, expiry, and that the token was made for OUR client id
-  let payload;
+  let email: string | undefined;
+  let emailVerified = false;
+  let googleName: string | undefined;
   try {
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
+    const info = await googleClient.getTokenInfo(accessToken);
+    if (info.aud !== process.env.GOOGLE_CLIENT_ID) {
+      throw new Error('Google access token is not for this app');
+    }
+
+    const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: 'Bearer ' + accessToken },
     });
-    payload = ticket.getPayload();
+    if (!response.ok) {
+      throw new Error('Failed to fetch user info from Google');
+    }
+
+    const profile = (await response.json()) as { email?: string; email_verified?: boolean; name?: string };
+    email = profile.email;
+    emailVerified = profile.email_verified ?? false;
+    googleName = profile.name;
   } catch {
     res.status(401).json({ error: 'Google sign-in failed' });
     return;
   }
 
-  if (payload == null || typeof payload.email !== 'string' || !payload.email_verified) {
+  if (email == null || typeof email !== 'string' || !emailVerified) {
     res.status(401).json({ error: 'Google account email is not verified' });
     return;
   }
 
-  const cleanEmail = payload.email.trim().toLowerCase();
+  const cleanEmail = email.trim().toLowerCase();
   const snapshot = await db.collection('users').where('email', '==', cleanEmail).limit(1).get();
 
   // Existing account (password or Google) -> log in. Otherwise create one with no password.
@@ -144,7 +156,7 @@ router.post('/google', async (req, res) => {
     return;
   }
 
-  const displayName = payload.name?.trim() || cleanEmail.split('@')[0];
+  const displayName = googleName?.trim() || cleanEmail.split('@')[0];
   const userRef = await db.collection('users').add({
     email: cleanEmail,
     name: displayName,
