@@ -4,7 +4,9 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { OAuth2Client } from 'google-auth-library';
 
 import { db } from '../firebase.ts';
-import { createToken } from '../auth.ts';
+import { createToken, requireAuth } from '../auth.ts';
+import { loadUser, userToJson } from '../lib/teamAccess.ts';
+import { authLimiter } from '../lib/rateLimits.ts';
 
 const router = Router();
 
@@ -13,14 +15,15 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID); // visible 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
 const SALT_ROUNDS = 10;
+const MAX_NAME_LENGTH = 100;
 
 /**
  * POST /api/register
- * Body: { email, password, name? }
+ * Body: { email, password, name?, isCoach? }
  * 201 with { token, user } | 400 invalid input | 409 email already registered
  */
-router.post('/register', async (req, res) => {
-  const { email, password, name } = req.body ?? {};
+router.post('/register', authLimiter, async (req, res) => {
+  const { email, password, name, isCoach } = req.body ?? {};
 
   if (typeof email !== 'string' || typeof password !== 'string') {
     res.status(400).json({ error: 'Email and password are required' });
@@ -39,6 +42,10 @@ router.post('/register', async (req, res) => {
     res.status(400).json({ error: 'Name must be text' });
     return;
   }
+  if (isCoach != null && typeof isCoach !== 'boolean') {
+    res.status(400).json({ error: 'isCoach must be true or false' });
+    return;
+  }
 
   const existing = await db.collection('users').where('email', '==', cleanEmail).limit(1).get();
   if (!existing.empty) {
@@ -54,14 +61,14 @@ router.post('/register', async (req, res) => {
     email: cleanEmail,
     name: displayName,
     passwordHash: passwordHash,
-    isCoach: false,
+    isCoach: isCoach === true,
     teamId: null,
     createdAt: FieldValue.serverTimestamp(),
   });
 
   res.status(201).json({
     token: createToken(userRef.id),
-    user: { id: userRef.id, email: cleanEmail, name: displayName },
+    user: { id: userRef.id, email: cleanEmail, name: displayName, isCoach: isCoach === true, teamId: null },
   });
 });
 
@@ -70,7 +77,7 @@ router.post('/register', async (req, res) => {
  * Body: { email, password }
  * 200 with { token, user } | 400 missing fields | 401 wrong email or password
  */
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   const { email, password } = req.body ?? {};
 
   if (typeof email !== 'string' || typeof password !== 'string' || email.trim() === '' || password === '') {
@@ -90,7 +97,7 @@ router.post('/login', async (req, res) => {
 
   res.status(200).json({
     token: createToken(userDoc.id),
-    user: { id: userDoc.id, email: userDoc.get('email'), name: userDoc.get('name') },
+    user: userToJson(userDoc),
   });
 });
 
@@ -99,7 +106,7 @@ router.post('/login', async (req, res) => {
  * Body: { credential } (the ID token Google gives the browser)
  * 200 with { token, user } | 400 missing credential | 401 token rejected by Google
  */
-router.post('/google', async (req, res) => {
+router.post('/google', authLimiter, async (req, res) => {
   const { accessToken } = req.body ?? {};
 
   if (typeof accessToken !== 'string' || accessToken === '') {
@@ -145,7 +152,7 @@ router.post('/google', async (req, res) => {
     const userDoc = snapshot.docs[0];
     res.status(200).json({
       token: createToken(userDoc.id),
-      user: { id: userDoc.id, email: userDoc.get('email'), name: userDoc.get('name') },
+      user: userToJson(userDoc),
     });
     return;
   }
@@ -162,8 +169,72 @@ router.post('/google', async (req, res) => {
 
   res.status(201).json({
     token: createToken(userRef.id),
-    user: { id: userRef.id, email: cleanEmail, name: displayName },
+    user: { id: userRef.id, email: cleanEmail, name: displayName, isCoach: false, teamId: null },
   });
+});
+
+/**
+ * GET /api/me (auth)
+ * 200 with { user } | 401
+ */
+router.get('/me', requireAuth, async (_req, res) => {
+  const user = await loadUser(res.locals.userId);
+  if (user == null) {
+    res.status(401).json({ error: 'Account not found, please log in again' });
+    return;
+  }
+  res.status(200).json({ user: userToJson(user) });
+});
+
+/**
+ * PATCH /api/me (auth)
+ * Body: { name?, isCoach? }
+ * 200 with { user } | 400 | 401 | 409 can't stop being a coach while coaching a team
+ */
+router.patch('/me', requireAuth, async (req, res) => {
+  const { name, isCoach } = req.body ?? {};
+  const fields: Record<string, unknown> = {};
+
+  if (name !== undefined) {
+    if (typeof name !== 'string' || name.trim() === '') {
+      res.status(400).json({ error: 'Name must be non-empty text' });
+      return;
+    }
+    if (name.trim().length > MAX_NAME_LENGTH) {
+      res.status(400).json({ error: 'Name is too long' });
+      return;
+    }
+    fields.name = name.trim();
+  }
+  if (isCoach !== undefined) {
+    if (typeof isCoach !== 'boolean') {
+      res.status(400).json({ error: 'isCoach must be true or false' });
+      return;
+    }
+    fields.isCoach = isCoach;
+  }
+  if (Object.keys(fields).length === 0) {
+    res.status(400).json({ error: 'No valid fields to update' });
+    return;
+  }
+
+  const user = await loadUser(res.locals.userId);
+  if (user == null) {
+    res.status(401).json({ error: 'Account not found, please log in again' });
+    return;
+  }
+
+  if (isCoach === false) {
+    const teamId = user.get('teamId');
+    const team = typeof teamId === 'string' && teamId !== '' ? await db.collection('teams').doc(teamId).get() : null;
+    if (team?.exists && team.get('coachId') === user.id) {
+      res.status(409).json({ error: 'You coach a team. Transfer coaching or delete the team first' });
+      return;
+    }
+  }
+
+  await user.ref.update(fields);
+  res.status(200).json({ user: userToJson(await user.ref.get()) });
 });
 
 export default router;

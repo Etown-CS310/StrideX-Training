@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { FieldValue, Timestamp, type DocumentSnapshot } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 import { db } from '../firebase.ts';
 import { requireAuth } from '../auth.ts';
+import { activityToJson, findUserActivity, loadLaps, loadUserActivities } from '../lib/activityData.ts';
 
 const router = Router();
 
@@ -102,48 +103,11 @@ function validateLaps(laps: unknown): { laps: Fields[] } | { error: string } {
 }
 
 /**
- * Turns a Firestore activity document into JSON (timestamps become ISO strings).
- */
-function activityToJson(doc: DocumentSnapshot): Fields {
-  const data = doc.data() ?? {};
-  const startTime = data.startTime instanceof Timestamp ? data.startTime.toDate().toISOString() : null;
-  return {
-    id: doc.id,
-    type: data.type,
-    workoutType: data.workoutType ?? null,
-    title: data.title,
-    startTime: startTime,
-    distance: data.distance ?? null,
-    duration: data.duration ?? null,
-    hrAvg: data.hrAvg ?? null,
-    hrMax: data.hrMax ?? null,
-    elevation: data.elevation ?? null,
-    calories: data.calories ?? null,
-    cadence: data.cadence ?? null,
-    power: data.power ?? null,
-    notes: data.notes ?? '',
-  };
-}
-
-/**
- * Loads an activity that belongs to the user, or null if it doesn't exist or isn't theirs.
- * Other users' activities are treated as missing so their ids can't be probed.
- */
-async function findOwnActivity(id: string, userId: string): Promise<DocumentSnapshot | null> {
-  const doc = await db.collection('activities').doc(id).get();
-  if (!doc.exists || doc.get('userId') !== userId) return null;
-  return doc;
-}
-
-/**
  * GET /api/activities
  * 200 with { activities: [...] } oldest first | 401
  */
 router.get('/', async (_req, res) => {
-  const snapshot = await db.collection('activities').where('userId', '==', res.locals.userId).get();
-  const activities = snapshot.docs.map(activityToJson);
-  activities.sort((a, b) => String(a.startTime ?? '').localeCompare(String(b.startTime ?? '')));
-  res.status(200).json({ activities: activities });
+  res.status(200).json({ activities: await loadUserActivities(res.locals.userId) });
 });
 
 /**
@@ -151,14 +115,12 @@ router.get('/', async (_req, res) => {
  * 200 with { activity, laps } | 401 | 404
  */
 router.get('/:id', async (req, res) => {
-  const doc = await findOwnActivity(req.params.id, res.locals.userId);
+  const doc = await findUserActivity(req.params.id, res.locals.userId);
   if (doc == null) {
     res.status(404).json({ error: 'Activity not found' });
     return;
   }
-  const lapSnapshot = await doc.ref.collection('laps').get();
-  const laps = lapSnapshot.docs.map((lap) => ({ id: lap.id, ...lap.data() }));
-  res.status(200).json({ activity: activityToJson(doc), laps: laps });
+  res.status(200).json({ activity: activityToJson(doc), laps: await loadLaps(doc) });
 });
 
 /**
@@ -217,7 +179,7 @@ router.patch('/:id', async (req, res) => {
     return;
   }
 
-  const doc = await findOwnActivity(req.params.id, res.locals.userId);
+  const doc = await findUserActivity(req.params.id, res.locals.userId);
   if (doc == null) {
     res.status(404).json({ error: 'Activity not found' });
     return;
@@ -233,7 +195,7 @@ router.patch('/:id', async (req, res) => {
  * 200 with { deleted: id } | 401 | 404
  */
 router.delete('/:id', async (req, res) => {
-  const doc = await findOwnActivity(req.params.id, res.locals.userId);
+  const doc = await findUserActivity(req.params.id, res.locals.userId);
   if (doc == null) {
     res.status(404).json({ error: 'Activity not found' });
     return;
