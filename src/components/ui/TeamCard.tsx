@@ -1,4 +1,4 @@
-function GroupCard({ src, title, location, description, count, status }: { src: string; title: string; location: string; description: string; count: number; status: string }) {
+function TeamCard({ src, title, location, description, count, status }: { src: string; title: string; location: string; description: string; count: number; status: string }) {
   return (
     <div className="card rounded-4 bg-stridex-black mb-3">        
       <div className="card-body d-flex flex-column justify-content-between h-100 gap-3 text-white">
@@ -29,4 +29,4 @@ function GroupCard({ src, title, location, description, count, status }: { src: 
   );
 }
 
-export default GroupCard;
+export default TeamCard;
