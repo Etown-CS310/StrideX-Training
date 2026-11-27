@@ -97,6 +97,8 @@ erDiagram
         string id PK
         string name
         string description
+        string city
+        string state
         string coachId FK "the one user who coaches this team"
         string joinCode UK "6 characters, shared with athletes"
         timestamp createdAt
@@ -177,6 +179,7 @@ Endpoints marked (auth) need the header `Authorization: Bearer <token>`, using t
 | `PATCH` | `/api/me` (auth) | Change `name` or `isCoach` |
 | `POST` | `/api/team` (auth) | Create a team and become its coach |
 | `GET` | `/api/team` (auth, member) | My team, its coach and athletes |
+| `GET` | `/api/team/browse` (auth) | Browse all teams |
 | `PATCH` | `/api/team` (auth, coach) | Rename / change description |
 | `DELETE` | `/api/team` (auth, coach) | Delete the team (members are removed, goals deleted) |
 | `POST` | `/api/team/join-code` (auth, coach) | Make a new join code |
@@ -384,16 +387,16 @@ Register, login, and Google responses now return `user` as `{ id, email, name, i
 
 **Body**
 ```json
-{ "name": "Etown XC", "description": "Cross country" }
+{ "name": "Etown XC", "description": "Cross country", "city": "Elizabethtown", "state": "PA" }
 ```
 **201 Created**
 ```json
-{ "team": { "id": "T7x...", "name": "Etown XC", "description": "Cross country", "coachId": "Be95...", "joinCode": "K7PQ2M", "createdAt": "2026-11-20T15:00:00.000Z" } }
+{ "team": { "id": "T7x...", "name": "Etown XC", "description": "Cross country", "coachId": "Be95...", "city": "Elizabethtown", "state": "PA", "joinCode": "K7PQ2M", "createdAt": "2026-11-20T15:00:00.000Z" } }
 ```
 | Status | When |
 |---|---|
 | 201 | Created; the caller's `teamId` is set and `isCoach` becomes `true` |
-| 400 | Missing name, or name/description too long |
+| 400 | Missing name, or name/description/city/state too long |
 | 409 | Already on a team (a user can only be on, or coach, one team) |
 </details>
 
@@ -403,7 +406,7 @@ Register, login, and Google responses now return `user` as `{ id, email, name, i
 **200 OK** (`joinCode` and member `email`s are only included for the coach)
 ```json
 {
-  "team": { "id": "T7x...", "name": "Etown XC", "description": "", "coachId": "Be95...", "joinCode": "K7PQ2M", "createdAt": "..." },
+  "team": { "id": "T7x...", "name": "Etown XC", "description": "", "coachId": "Be95...", "city": "Elizabethtown", "state": "PA", "joinCode": "K7PQ2M", "createdAt": "..." },
   "coach": { "id": "Be95...", "name": "Coach Kim", "email": "kim@example.com" },
   "athletes": [ { "id": "aQ1...", "name": "Alice", "email": "alice@example.com" } ],
   "viewerIsCoach": true
@@ -416,11 +419,29 @@ Register, login, and Google responses now return `user` as `{ id, email, name, i
 </details>
 
 <details>
+<summary><code>GET /api/team/browse</code> (auth) — browse all teams</summary>
+
+**200 OK** (`joinCode` is only included for teams the caller coaches)
+```json
+{
+  "teams": [
+    { "id": "T7x...", "name": "Etown XC", "description": "Cross country", "city": "Elizabethtown", "state": "PA", "members": 12, "isMember": true, "isCoach": true, "joinCode": "K7PQ2M", "createdAt": "2026-11-20T15:00:00.000Z" },
+    { "id": "U2k...", "name": "Harrisburg Runners", "description": "", "city": "Harrisburg", "state": "PA", "members": 40, "isMember": false, "isCoach": false, "createdAt": "2026-11-18T12:00:00.000Z" }
+  ]
+}
+```
+| Status | When |
+|---|---|
+| 200 | Success |
+| 401 | Not logged in |
+</details>
+
+<details>
 <summary><code>POST /api/team/join</code> (auth) — join with a code</summary>
 
 **Body** (not case sensitive)
 ```json
-{ "code": "K7PQ2M" }
+{ "code": "K7PQ2M", "teamId": "T7x..." }
 ```
 **200 OK** — `{ "team": { ... } }` (no join code)
 
@@ -428,7 +449,7 @@ Register, login, and Google responses now return `user` as `{ id, email, name, i
 |---|---|
 | 200 | Joined as an athlete |
 | 400 | Missing code |
-| 404 | No team has that code |
+| 404 | No team has that code or the code is not for this team |
 | 409 | Already on a team |
 </details>
 

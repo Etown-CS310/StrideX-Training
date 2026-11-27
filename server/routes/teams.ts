@@ -5,7 +5,7 @@ import { db } from '../firebase.ts';
 import { requireAuth } from '../auth.ts';
 import { activityToJson, findUserActivity, loadLaps, loadUserActivities, type ActivityJson } from '../lib/activityData.ts';
 import {
-  createJoinCode, findTeamAthlete, isTeamCoach, loadTeamMembers, requireCoach, requireTeam, teamOf, teamToJson,
+  createJoinCode, findTeamAthlete, isTeamCoach, loadTeamMembers, loadUser, requireCoach, requireTeam, teamOf, teamToJson,
   type Team,
 } from '../lib/teamAccess.ts';
 import {
@@ -22,13 +22,15 @@ router.use(requireAuth);
 
 const MAX_TEAM_NAME_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 500;
+const MAX_CITY_LENGTH = 100;
+const MAX_STATE_LENGTH = 100;
 const MAX_GOAL_TITLE_LENGTH = 200;
 const GOAL_APPLIES_TO = ['team', 'each'];
 
 type Fields = Record<string, unknown>;
 
 /**
- * Checks team name/description. With partial = true (PATCH) only the fields sent are checked.
+ * Checks team name/description/city/state. With partial = true (PATCH) only the fields sent are checked.
  */
 function validateTeam(body: Fields, partial: boolean): { fields: Fields } | { error: string } {
   const fields: Fields = {};
@@ -45,6 +47,22 @@ function validateTeam(body: Fields, partial: boolean): { fields: Fields } | { er
     fields.description = body.description.trim();
   } else if (!partial) {
     fields.description = '';
+  }
+
+  if ('city' in body) {
+    if (typeof body.city !== 'string') return { error: 'city must be text' };
+    if (body.city.trim().length > MAX_CITY_LENGTH) return { error: 'city is too long' };
+    fields.city = body.city.trim();
+  } else if (!partial) {
+    fields.city = '';
+  }
+
+  if ('state' in body) {
+    if (typeof body.state !== 'string') return { error: 'state must be text' };
+    if (body.state.trim().length > MAX_STATE_LENGTH) return { error: 'state is too long' };
+    fields.state = body.state.trim();
+  } else if (!partial) {
+    fields.state = '';
   }
 
   return { fields: fields };
@@ -197,7 +215,7 @@ async function athleteFromParams(res: Response, athleteId: string): Promise<Docu
 
 /**
  * POST /api/team
- * Body: { name, description? }. The caller becomes the team's coach.
+ * Body: { name, description?, city?, state? }. The caller becomes the team's coach.
  * 201 with { team } | 400 | 401 | 409 already on a team
  */
 router.post('/', async (req, res) => {
@@ -254,6 +272,37 @@ router.get('/', requireTeam, async (_req, res) => {
     athletes: athletes.map((athlete) => memberForViewer(athlete, viewerIsCoach)),
     viewerIsCoach: viewerIsCoach,
   });
+});
+
+/**
+ * GET /api/team/browse
+ * 200 with { teams } (join code included only for teams the caller coaches) | 401
+ */
+router.get('/browse', async (_req, res) => {
+  const userId = res.locals.userId;
+
+  // One read for the caller's team, so no member documents need loading
+  const me = await loadUser(userId);
+  const myTeamId = me?.get('teamId') ?? null;
+
+  const snapshot = await db.collection('teams').orderBy('createdAt', 'desc').get();
+
+  const teams = await Promise.all(snapshot.docs.map(async (doc) => {
+    const { joinCode, coachId, ...team } = teamToJson(doc);
+    const isCoach = coachId === userId;
+
+    const countSnap = await db.collection('users').where('teamId', '==', doc.id).count().get();
+
+    return {
+      ...team,
+      members: countSnap.data().count,
+      isMember: doc.id === myTeamId,
+      isCoach: isCoach,
+      ...(isCoach ? { joinCode: joinCode } : {}),
+    };
+  }));
+
+  res.status(200).json({ teams });
 });
 
 /**
@@ -317,7 +366,7 @@ router.post('/join-code', requireTeam, requireCoach, async (_req, res) => {
  * 200 with { team } | 400 | 401 | 404 unknown code | 409 already on a team
  */
 router.post('/join', joinLimiter, async (req, res) => {
-  const { code } = req.body ?? {};
+  const { code, teamId } = req.body ?? {};
   if (typeof code !== 'string' || code.trim() === '') {
     res.status(400).json({ error: 'Join code is required' });
     return;
@@ -331,6 +380,11 @@ router.post('/join', joinLimiter, async (req, res) => {
   }
   const teamRef = found.docs[0].ref;
   const userRef = db.collection('users').doc(res.locals.userId);
+
+  if (teamId !== undefined && teamRef.id !== teamId) {
+    res.status(404).json({ error: 'That code is not for this team' });
+    return;
+  }
 
   const outcome = await db.runTransaction(async (tx) => {
     const [user, team] = await Promise.all([tx.get(userRef), tx.get(teamRef)]);

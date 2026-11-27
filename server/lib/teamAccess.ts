@@ -17,6 +17,8 @@ export interface Team {
   id: string;
   name: string;
   description: string;
+  city: string;
+  state: string;
   coachId: string;
   joinCode: string;
   createdAt: string | null;
@@ -41,6 +43,8 @@ export function teamToJson(doc: DocumentSnapshot): Team {
     id: doc.id,
     name: doc.get('name') ?? '',
     description: doc.get('description') ?? '',
+    city: doc.get('city') ?? '',
+    state: doc.get('state') ?? '',
     coachId: doc.get('coachId') ?? '',
     joinCode: doc.get('joinCode') ?? '',
     createdAt: createdAt instanceof Timestamp ? createdAt.toDate().toISOString() : null,
